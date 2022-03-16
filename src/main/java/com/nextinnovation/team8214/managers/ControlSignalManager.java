@@ -12,7 +12,7 @@ public class ControlSignalManager {
    ***********************************************************************************************/
   private static ControlSignalManager instance = null;
 
-  public static ControlSignalManager getInstance() {
+  public static synchronized ControlSignalManager getInstance() {
     if (instance == null) {
       instance = new ControlSignalManager();
     }

@@ -12,7 +12,7 @@ public class OdometryFusingManager {
    ***********************************************************************************************/
   private static OdometryFusingManager instance = null;
 
-  public static OdometryFusingManager getInstance() {
+  public static synchronized OdometryFusingManager getInstance() {
     if (instance == null) {
       instance = new OdometryFusingManager();
     }

@@ -12,7 +12,7 @@ import com.nextinnovation.team8214.auto.TrajectorySet;
 import com.nextinnovation.team8214.devices.PneumaticCompressor;
 import com.nextinnovation.team8214.devices.ahrs.AhrsPigeon;
 import com.nextinnovation.team8214.managers.ControlSignalManager;
-import com.nextinnovation.team8214.subsystems.Vision;
+import com.nextinnovation.team8214.subsystems.vision.Vision;
 import com.nextinnovation.team8214.subsystems.swerve.Swerve;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 

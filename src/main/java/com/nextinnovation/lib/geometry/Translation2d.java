@@ -8,7 +8,7 @@ import java.text.DecimalFormat;
 public class Translation2d implements ITranslation2d<Translation2d> {
   protected static final Translation2d kIdentity = new Translation2d();
 
-  public static final Translation2d identity() {
+  public static Translation2d identity() {
     return kIdentity;
   }
 
@@ -178,10 +178,10 @@ public class Translation2d implements ITranslation2d<Translation2d> {
    * the given angle. If `vertical` is true, then check not within the given angle, but within the
    * image of that angle rotated by pi about its vertex.
    *
-   * @param Translation2d A A point on one side of the angle.
-   * @param Translation2d B The vertex of the angle.
-   * @param Translation2d C A point on the other side of the angle.
-   * @param boolean vertical Whether to check in the angle vertical to the one given
+   * @param A A point on one side of the angle.
+   * @param B The vertex of the angle.
+   * @param C A point on the other side of the angle.
+   * @param vertical Whether to check in the angle vertical to the one given
    * @return Whether this translation is within the given angle.
    * @author Joseph Reed
    */
@@ -226,8 +226,8 @@ public class Translation2d implements ITranslation2d<Translation2d> {
   /**
    * The distance between a point and a line can be computed as a scalar projection.
    *
-   * @param Translation2d a One point on the line.
-   * @param Translation2d b Another point on the line.
+   * @param a One point on the line.
+   * @param b Another point on the line.
    */
   public double distanceToLine(Translation2d a, Translation2d b) {
     Translation2d point = new Translation2d(a, this);

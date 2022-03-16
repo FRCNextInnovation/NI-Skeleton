@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class AutoModeChooser {
   private static AutoModeChooser instance = null;
 
-  public static AutoModeChooser getInstance() {
+  public static synchronized AutoModeChooser getInstance() {
     if (instance == null) {
       instance = new AutoModeChooser();
     }

@@ -44,42 +44,45 @@ public class Swerve extends BaseSubsystem {
 
           @Override
           public void onLoop(double timestamp) {
-            updateOdometer(timestamp);
+            synchronized (stateLock) {
+              updateOdometer(timestamp);
 
-            switch (swerveState) {
-              case MANUAL:
-                Translation2d translationalInput =
-                    ControlSignalManager.getInstance().getSwerveManualTranslation();
-                double rotationalInput =
-                    ControlSignalManager.getInstance().getSwerveManualRotationMagnitude();
-                if (Util.epsilonEquals(rotationalInput, 0.0)) {
-                  if (!isHeadingControllerEnabled()
-                      && Math.abs(getAngularVelocity().getUnboundedDegrees()) <= 5.625) {
-                    setTargetHeadingToCurrentHeading();
-                    enableHeadingController();
+              switch (swerveState) {
+                case MANUAL:
+                  Translation2d translationalInput =
+                      ControlSignalManager.getInstance().getSwerveManualTranslation();
+                  double rotationalInput =
+                      ControlSignalManager.getInstance().getSwerveManualRotationMagnitude();
+                  if (Util.epsilonEquals(rotationalInput, 0.0)) {
+                    if (!isHeadingControllerEnabled()
+                        && Math.abs(getAngularVelocity().getUnboundedDegrees()) <= 5.625) {
+                      setTargetHeadingToCurrentHeading();
+                      enableHeadingController();
+                    }
+                  } else {
+                    disableHeadingController();
                   }
-                } else {
-                  disableHeadingController();
-                }
-                updateNormalizedVectorialVelocityControl(
-                    translationalInput, rotationalInput, true, false, timestamp);
-                break;
+                  updateNormalizedVectorialVelocityControl(
+                      translationalInput, rotationalInput, false, timestamp);
+                  break;
 
-              case TRAJECTORY:
-                if (!driveMotionPlanner.isDone()) {
-                  Translation2d driveVector = driveMotionPlanner.update(getPose());
-                  double maxRotationMagnitude = driveMotionPlanner.getNormalizedMaxRotationSpeed();
+                case TRAJECTORY:
+                  if (!driveMotionPlanner.isDone()) {
+                    Translation2d driveVector = driveMotionPlanner.update(getPose());
+                    double maxRotationMagnitude =
+                        driveMotionPlanner.getNormalizedMaxRotationSpeed();
 
-                  updateNormalizedTranslationVelocityControl(
-                      driveVector, maxRotationMagnitude, true, true, timestamp);
-                } else {
-                  return;
-                }
-                break;
+                    updateNormalizedTranslationVelocityControl(
+                        driveVector, maxRotationMagnitude, true, timestamp);
+                  } else {
+                    return;
+                  }
+                  break;
 
-              case DISABLE:
-                disableModules();
-                break;
+                case DISABLE:
+                  disableModules();
+                  break;
+              }
             }
           }
 
@@ -114,72 +117,36 @@ public class Swerve extends BaseSubsystem {
   /***********************************************************************************************
    * Subsystem States *
    ***********************************************************************************************/
-  public enum SwerveState {
-    MANUAL("Manual"),
-    DISABLE("Disable"),
-    TRAJECTORY("Trajectory");
+  private SwerveState swerveState;
 
-    public final String name;
-
-    SwerveState(String name) {
-      this.name = name;
-    }
-  }
+  private final Object stateLock = new Object();
 
   public synchronized void setState(SwerveState new_state) {
-    swerveState = new_state;
-    switch (swerveState) {
-      case MANUAL:
-        configHeadingController(0.375, 0.0, 0.0, 360.0 / 1024.0);
-        break;
-      case DISABLE:
-        disableHeadingController();
-        disableModules();
-        break;
-      case TRAJECTORY:
-        configHeadingController(0.65, 0.0, 360.0 / 128.0, 360.0 / 128.0);
-        enableHeadingController();
-        break;
+    synchronized (stateLock) {
+      swerveState = new_state;
+
+      switch (swerveState) {
+        case MANUAL:
+          configHeadingController(
+              SwerveConfig.HeadingController.Manual.KP,
+              SwerveConfig.HeadingController.Manual.KI,
+              SwerveConfig.HeadingController.Manual.KD,
+              SwerveConfig.HeadingController.Manual.ERROR_TOLERANCE);
+          break;
+        case DISABLE:
+          disableHeadingController();
+          disableModules();
+          break;
+        case TRAJECTORY:
+          configHeadingController(
+              SwerveConfig.HeadingController.Auto.KP,
+              SwerveConfig.HeadingController.Auto.KI,
+              SwerveConfig.HeadingController.Auto.KD,
+              SwerveConfig.HeadingController.Auto.ERROR_TOLERANCE);
+          enableHeadingController();
+          break;
+      }
     }
-  }
-
-  /***********************************************************************************************
-   * Config *
-   ***********************************************************************************************/
-  public static final class SwerveConfig {
-    // Swerve
-    public static final double WHEELBASE_HALF_LENGTH = 559.35 / 2.0 / 25.4;
-    public static final double WHEELBASE_HALF_WIDTH = 559.35 / 2.0 / 25.4;
-    public static final double WHEELBASE_HALF_DIAGONAL =
-        Math.hypot(WHEELBASE_HALF_LENGTH, WHEELBASE_HALF_WIDTH);
-    public static final int MODULE_COUNT = 4;
-
-    public static final Translation2d FRONT_LEFT_MODULE_POSITION_RELATIVE_TO_DRIVE_CENTER =
-        new Translation2d(WHEELBASE_HALF_LENGTH, WHEELBASE_HALF_WIDTH);
-    public static final Translation2d REAR_LEFT_MODULE_POSITION_RELATIVE_TO_DRIVE_CENTER =
-        new Translation2d(-WHEELBASE_HALF_LENGTH, WHEELBASE_HALF_WIDTH);
-    public static final Translation2d REAR_RIGHT_MODULE_POSITION_RELATIVE_TO_DRIVE_CENTER =
-        new Translation2d(-WHEELBASE_HALF_LENGTH, -WHEELBASE_HALF_WIDTH);
-    public static final Translation2d FRONT_RIGHT_MODULE_POSITION_RELATIVE_TO_DRIVE_CENTER =
-        new Translation2d(WHEELBASE_HALF_LENGTH, -WHEELBASE_HALF_WIDTH);
-    public static final List<Translation2d> POSITIONS_RELATIVE_TO_DRIVE_CENTER =
-        Arrays.asList(
-            FRONT_LEFT_MODULE_POSITION_RELATIVE_TO_DRIVE_CENTER,
-            REAR_LEFT_MODULE_POSITION_RELATIVE_TO_DRIVE_CENTER,
-            REAR_RIGHT_MODULE_POSITION_RELATIVE_TO_DRIVE_CENTER,
-            FRONT_RIGHT_MODULE_POSITION_RELATIVE_TO_DRIVE_CENTER);
-
-    // Calibration Offsets (calibration encoder values when the wheels are facing 0 degrees)
-    public static final int FRONT_LEFT_CALIBRATION_OFFSET = 2460;
-    public static final int REAR_LEFT_CALIBRATION_OFFSET = 5520;
-    public static final int REAR_RIGHT_CALIBRATION_OFFSET = 12720;
-    public static final int FRONT_RIGHT_CALIBRATION_OFFSET = 12528;
-
-    // Odometer
-    public static final double WHEEL_ODOMETER_MAX_DELTA_INCH = 2.2;
-
-    // Speed Config
-    public static final double MAX_SPEED_INCHES_PER_SECOND = 180.0;
   }
 
   /***********************************************************************************************
@@ -197,9 +164,8 @@ public class Swerve extends BaseSubsystem {
   /***********************************************************************************************
    * Init & Config *
    ***********************************************************************************************/
-  private SwerveState swerveState;
-
   private Pose2d startingPose = new Pose2d();
+
   private final PeriodicInput periodicInput = new PeriodicInput();
   private final SwerveInverseKinematics inverseKinematics =
       new SwerveInverseKinematics(
@@ -393,10 +359,6 @@ public class Swerve extends BaseSubsystem {
     }
   }
 
-  private double getNormalizeRotationMagnitude(double rotationMagnitude) {
-    return rotationMagnitude / SwerveConfig.WHEELBASE_HALF_DIAGONAL;
-  }
-
   public synchronized void setTrajectory(
       Trajectory<TimedState<Pose2dWithCurvature>> trajectory,
       Translation2d followingCenter,
@@ -482,35 +444,28 @@ public class Swerve extends BaseSubsystem {
   public synchronized void updateNormalizedVectorialVelocityControl(
       Translation2d translationVector,
       double rotationMagnitude,
-      boolean isFieldCentric,
       boolean enableClosedLoopControl,
       double timestamp) {
     setNormalizedModuleVelocityTargets(
         inverseKinematics.calculateNormalizedModuleVelocities(
             translationVector,
-            getNormalizeRotationMagnitude(
-                rotationMagnitude
-                    + headingController.calculate(periodicInput.ahrsHeading, timestamp)),
-            getPose(),
-            isFieldCentric),
+            rotationMagnitude + headingController.calculate(getFieldCentricHeading(), timestamp),
+            getFieldCentricHeading()),
         enableClosedLoopControl);
   }
 
   public synchronized void updateNormalizedTranslationVelocityControl(
       Translation2d translationVector,
       double maxRotationMagnitude,
-      boolean isFieldCentric,
       boolean enableClosedLoopControl,
       double timestamp) {
     setNormalizedModuleVelocityTargets(
-        inverseKinematics.calculateModuleVelocities(
+        inverseKinematics.calculateNormalizedModuleVelocities(
             translationVector,
             Util.limit(
-                getNormalizeRotationMagnitude(
-                    headingController.calculate(periodicInput.ahrsHeading, timestamp)),
+                headingController.calculate(getFieldCentricHeading(), timestamp),
                 maxRotationMagnitude),
-            getPose(),
-            isFieldCentric),
+            getFieldCentricHeading()),
         enableClosedLoopControl);
   }
 
@@ -531,7 +486,7 @@ public class Swerve extends BaseSubsystem {
    ************************************************************************************************/
   @Override
   public void logToSmartDashboard() {
-    SmartDashboard.putString("Swerve State", swerveState.name);
+    SmartDashboard.putString("Swerve State", swerveState.value);
     SmartDashboard.putString("Robot Pose", getPose().toString());
     if (Config.ENABLE_DEBUG_OUTPUT) {
       SmartDashboard.putBoolean("Is HeadingController Enabled", isHeadingControllerEnabled());

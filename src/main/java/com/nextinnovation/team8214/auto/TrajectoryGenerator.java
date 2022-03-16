@@ -16,12 +16,10 @@ import java.util.List;
 public class TrajectoryGenerator {
   public static final class TrajectoryGeneratorConfig {
     public static final double MAX_DELTA_X = 2.0;
-    public static final double MAX_DELTA_Y = 0.5;
+    public static final double MAX_DELTA_Y = 0.25;
     public static final double MAX_DELTA_THETA = Math.toRadians(5.0);
 
-    public static final double MAX_VELOCITY = 127.0;
-    public static final double MAX_ACCEL = 127.0;
-    public static final double MAX_DECEL = 127.0 * 0.75;
+    public static final double MAX_ABS_ACCEL = 120.0;
   }
 
   public enum TrajectorySplineType {
@@ -37,9 +35,7 @@ public class TrajectoryGenerator {
       double end_vel,
       double max_vel, // inches/s
       double max_accel, // inches/s^2
-      double max_decel,
-      double default_vel,
-      int slowdown_chunks) {
+      double default_vel) {
     List<Pose2d> waypointsMaybeFlipped = waypoints;
     final Pose2d flip = Pose2d.fromRotation(new Rotation2d(-1, 0, false));
     // TODO re-architect the spline generator to support reverse.
@@ -90,31 +86,26 @@ public class TrajectoryGenerator {
             start_vel,
             end_vel,
             max_vel,
-            max_accel,
-            max_decel,
-            slowdown_chunks);
+            max_accel);
     timed_trajectory.setDefaultVelocity(default_vel);
     return timed_trajectory;
   }
 
-  public static Trajectory<TimedState<Pose2dWithCurvature>> generateTrajectory(
+  public static Trajectory<TimedState<Pose2dWithCurvature>> generateSwerveTrajectory(
       TrajectorySplineType spline_type,
       boolean need_reversed,
       final List<Pose2d> waypoints,
-      final List<ITimingConstraint<Pose2dWithCurvature>> constraints,
-      double default_vel,
-      int slowdown_chunks) {
+      double max_translation_vel,
+      double default_vel) {
     return generateTrajectory(
         spline_type,
         need_reversed,
         waypoints,
-        constraints,
+        List.of(),
         0.0,
         0.0,
-        TrajectoryGeneratorConfig.MAX_VELOCITY,
-        TrajectoryGeneratorConfig.MAX_ACCEL,
-        TrajectoryGeneratorConfig.MAX_DECEL,
-        default_vel,
-        slowdown_chunks);
+        max_translation_vel,
+        TrajectoryGeneratorConfig.MAX_ABS_ACCEL,
+        default_vel);
   }
 }

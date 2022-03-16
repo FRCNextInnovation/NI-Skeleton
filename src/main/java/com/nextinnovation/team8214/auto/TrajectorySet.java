@@ -5,7 +5,6 @@ import com.nextinnovation.lib.geometry.Pose2dWithCurvature;
 import com.nextinnovation.lib.trajectory.Trajectory;
 import com.nextinnovation.lib.trajectory.timing.TimedState;
 import com.nextinnovation.team8214.Field;
-import com.nextinnovation.team8214.subsystems.swerve.Swerve;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +12,7 @@ import java.util.List;
 public class TrajectorySet {
   private static TrajectorySet instance = null;
 
-  public static TrajectorySet getInstance() {
+  public static synchronized TrajectorySet getInstance() {
     if (instance == null) {
       instance = new TrajectorySet();
     }
@@ -40,13 +39,12 @@ public class TrajectorySet {
     waypoints.add(Field.CriticalWaypoints.TOP_START_ROBOT_POSE);
     waypoints.add(Field.CriticalWaypoints.TOP_BALL_COLLECT_POSE);
 
-    return TrajectoryGenerator.generateTrajectory(
+    return TrajectoryGenerator.generateSwerveTrajectory(
         TrajectoryGenerator.TrajectorySplineType.QUINTIC_HERMITE_SPLINE,
         false,
         waypoints,
-        List.of(),
-        50.0 / Swerve.SwerveConfig.MAX_SPEED_INCHES_PER_SECOND,
-        1);
+        50.0,
+        0.3);
   }
 
   private Trajectory<TimedState<Pose2dWithCurvature>> getBottomStartToBottomBall() {
@@ -54,13 +52,12 @@ public class TrajectorySet {
     waypoints.add(Field.CriticalWaypoints.BOTTOM_START_ROBOT_POSE);
     waypoints.add(Field.CriticalWaypoints.BOTTOM_BALL_COLLECT_POSE);
 
-    return TrajectoryGenerator.generateTrajectory(
+    return TrajectoryGenerator.generateSwerveTrajectory(
         TrajectoryGenerator.TrajectorySplineType.QUINTIC_HERMITE_SPLINE,
         false,
         waypoints,
-        List.of(),
-        50.0 / Swerve.SwerveConfig.MAX_SPEED_INCHES_PER_SECOND,
-        1);
+        110.0,
+        0.3);
   }
 
   private Trajectory<TimedState<Pose2dWithCurvature>> getBottomBallToMidBall() {
@@ -68,13 +65,12 @@ public class TrajectorySet {
     waypoints.add(Field.CriticalWaypoints.BOTTOM_BALL_COLLECT_FLIPPED_POSE);
     waypoints.add(Field.CriticalWaypoints.MID_BALL_COLLECT_POSE);
 
-    return TrajectoryGenerator.generateTrajectory(
+    return TrajectoryGenerator.generateSwerveTrajectory(
         TrajectoryGenerator.TrajectorySplineType.QUINTIC_HERMITE_SPLINE,
         false,
         waypoints,
-        List.of(),
-        50.0 / Swerve.SwerveConfig.MAX_SPEED_INCHES_PER_SECOND,
-        15);
+        90.0,
+        0.3);
   }
 
   private Trajectory<TimedState<Pose2dWithCurvature>> getMidBallToHumanStationBall() {
@@ -82,26 +78,24 @@ public class TrajectorySet {
     waypoints.add(Field.CriticalWaypoints.MID_BALL_COLLECT_POSE);
     waypoints.add(Field.CriticalWaypoints.HUMAN_STATION_BALL_COLLECT_POSE);
 
-    return TrajectoryGenerator.generateTrajectory(
+    return TrajectoryGenerator.generateSwerveTrajectory(
         TrajectoryGenerator.TrajectorySplineType.QUINTIC_HERMITE_SPLINE,
         false,
         waypoints,
-        List.of(),
-        50.0 / Swerve.SwerveConfig.MAX_SPEED_INCHES_PER_SECOND,
-        15);
+        110.0,
+        0.3);
   }
 
   private Trajectory<TimedState<Pose2dWithCurvature>> getHumanStationBallToEndRobotShootPoint() {
     List<Pose2d> waypoints = new ArrayList<>();
     waypoints.add(Field.CriticalWaypoints.HUMAN_STATION_BALL_COLLECT_FLIPPED_POSE);
-    waypoints.add(Field.CriticalWaypoints.BOTTOM_END_ROBOT_SHOOT_FLIPPED);
+    waypoints.add(Field.CriticalWaypoints.BOTTOM_END_ROBOT_SHOOT_FLIPPED_POSE);
 
-    return TrajectoryGenerator.generateTrajectory(
+    return TrajectoryGenerator.generateSwerveTrajectory(
         TrajectoryGenerator.TrajectorySplineType.QUINTIC_HERMITE_SPLINE,
         false,
         waypoints,
-        List.of(),
-        50.0 / Swerve.SwerveConfig.MAX_SPEED_INCHES_PER_SECOND,
-        1);
+        150.0,
+        0.3);
   }
 }

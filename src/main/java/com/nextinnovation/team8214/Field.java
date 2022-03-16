@@ -72,7 +72,7 @@ public final class Field {
     public static final Pose2d BOTTOM_END_ROBOT_SHOOT_POSE =
         OriginalWaypoints.BOTTOM_END_ROBOT_SHOOT_POSITION;
 
-    public static final Pose2d BOTTOM_END_ROBOT_SHOOT_FLIPPED =
+    public static final Pose2d BOTTOM_END_ROBOT_SHOOT_FLIPPED_POSE =
         BOTTOM_END_ROBOT_SHOOT_POSE.rotationByOtherWithOwnCenter(FLIP);
   }
 }

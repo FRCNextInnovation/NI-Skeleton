@@ -127,6 +127,7 @@ public class DriveMotionPlanner {
    * @return A normalized constrain of rotation speed.
    */
   public double getNormalizedMaxRotationSpeed() {
+    // TODO: Maybe add a dynamic rotation constraint.
     return 1.0 - output.norm();
   }
 
@@ -140,7 +141,7 @@ public class DriveMotionPlanner {
   }
 
   /**
-   * Update create a normalized drive vector for chassis by adaptive pure pursuit. .
+   * Update create a normalized drive vector for chassis by adaptive pure pursuit.
    *
    * @param current_state Current pose2d of robot.
    * @return A normalized drive vector output. Can be also get by getNormalizedOutput().

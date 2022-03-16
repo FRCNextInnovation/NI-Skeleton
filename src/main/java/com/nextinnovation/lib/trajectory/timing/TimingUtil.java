@@ -16,9 +16,7 @@ public class TimingUtil {
       double start_velocity,
       double end_velocity,
       double max_velocity,
-      double max_abs_acceleration,
-      double max_deceleration,
-      int slowdown_chunks) {
+      double max_abs_acceleration) {
     final int num_states = (int) Math.ceil(distance_view.last_interpolant() / step_size + 1);
     List<S> states = new ArrayList<>(num_states);
     for (int i = 0; i < num_states; ++i) {
@@ -33,9 +31,7 @@ public class TimingUtil {
         start_velocity,
         end_velocity,
         max_velocity,
-        max_abs_acceleration,
-        max_deceleration,
-        slowdown_chunks);
+        max_abs_acceleration);
   }
 
   public static <S extends IState<S>> Trajectory<TimedState<S>> timeParameterizeTrajectory(
@@ -45,9 +41,7 @@ public class TimingUtil {
       double start_velocity,
       double end_velocity,
       double max_velocity,
-      double max_abs_acceleration,
-      double max_deceleration,
-      int slowdown_chunks) {
+      double max_abs_acceleration) {
     List<ConstrainedState<S>> constraint_states = new ArrayList<>(states.size());
     final double kEpsilon = 1e-6;
 
@@ -171,15 +165,11 @@ public class TimingUtil {
     successor.state = states.get(states.size() - 1);
     successor.distance = constraint_states.get(states.size() - 1).distance;
     successor.max_velocity = end_velocity;
-    successor.min_acceleration = -max_deceleration;
+    successor.min_acceleration = -max_abs_acceleration;
     successor.max_acceleration = max_abs_acceleration;
     for (int i = states.size() - 1; i >= 0; --i) {
       ConstrainedState<S> constraint_state = constraint_states.get(i);
-      // System.out.println("constrained_state" + constraint_state.toString());
       final double ds = constraint_state.distance - successor.distance; // will be negative.
-
-      if (i >= states.size() - slowdown_chunks)
-        constraint_state.min_acceleration = -max_deceleration;
 
       while (true) {
         // Enforce reverse max reachable velocity limit.
@@ -248,7 +238,6 @@ public class TimingUtil {
     double v = 0.0;
     for (int i = 0; i < states.size(); ++i) {
       final ConstrainedState<S> constrained_state = constraint_states.get(i);
-      // System.out.println("constrained_state" + constrained_state.toString());
       // Advance t.
       final double ds = constrained_state.distance - s;
       double accel =

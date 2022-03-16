@@ -7,11 +7,11 @@ public class SeriesAction extends BaseAction {
   private BaseAction curAction;
   private final ArrayList<BaseAction> remainingActions;
 
-  public SeriesAction(List<BaseAction> actions) {
-    remainingActions = new ArrayList<>(actions.size());
+  public SeriesAction(List<BaseAction> new_actions) {
+    remainingActions = new ArrayList<>(new_actions.size());
 
     // Avoid to use addAll() for safe.
-    for (BaseAction action : actions) {
+    for (BaseAction action : new_actions) {
       remainingActions.add(action);
     }
 

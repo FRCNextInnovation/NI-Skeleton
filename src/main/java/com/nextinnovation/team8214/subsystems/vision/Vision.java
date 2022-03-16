@@ -1,4 +1,4 @@
-package com.nextinnovation.team8214.subsystems;
+package com.nextinnovation.team8214.subsystems.vision;
 
 import com.nextinnovation.lib.drivers.Limelight;
 import com.nextinnovation.lib.geometry.Rotation2d;
@@ -56,17 +56,7 @@ public class Vision extends BaseSubsystem {
   /***********************************************************************************************
    * Subsystem States *
    ***********************************************************************************************/
-  public enum VisionState {
-    ENABLE("Enable"),
-    OFF("Off"),
-    BLINK("Blink");
-
-    public final String name;
-
-    VisionState(String name) {
-      this.name = name;
-    }
-  }
+  private VisionState visionState = VisionState.OFF;
 
   public synchronized void setState(VisionState new_state) {
     visionState = new_state;
@@ -84,21 +74,6 @@ public class Vision extends BaseSubsystem {
   }
 
   /***********************************************************************************************
-   * Init & Config *
-   ***********************************************************************************************/
-  private final PeriodicInput periodicInput = new PeriodicInput();
-
-  private final Limelight limelight = new Limelight();
-  private VisionState visionState = VisionState.OFF;
-  private boolean isEnabled = false;
-
-  private final Object ioLock = new Object();
-
-  public Vision() {
-    setState(VisionState.OFF);
-  }
-
-  /***********************************************************************************************
    * Singleton *
    ***********************************************************************************************/
   private static Vision instance = null;
@@ -108,6 +83,20 @@ public class Vision extends BaseSubsystem {
       instance = new Vision();
     }
     return instance;
+  }
+
+  /***********************************************************************************************
+   * Init & Config *
+   ***********************************************************************************************/
+  private final PeriodicInput periodicInput = new PeriodicInput();
+
+  private final Limelight limelight = new Limelight();
+  private boolean isEnabled = false;
+
+  private final Object ioLock = new Object();
+
+  public Vision() {
+    setState(VisionState.OFF);
   }
 
   /************************************************************************************************
@@ -184,6 +173,6 @@ public class Vision extends BaseSubsystem {
    ************************************************************************************************/
   @Override
   public void logToSmartDashboard() {
-    SmartDashboard.putString("Vision State", visionState.name);
+    SmartDashboard.putString("Vision State", visionState.value);
   }
 }
