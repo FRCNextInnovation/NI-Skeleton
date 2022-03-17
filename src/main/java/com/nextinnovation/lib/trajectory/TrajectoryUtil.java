@@ -25,14 +25,13 @@ public class TrajectoryUtil {
     for (int i = 0; i < trajectory.length(); ++i) {
       TimedState<S> timed_state = trajectory.getState(i);
       waypoints.add(
-          new TimedState<S>(
+          new TimedState<>(
               timed_state.state().mirror(),
               timed_state.t(),
               timed_state.velocity(),
               timed_state.acceleration()));
     }
-    Trajectory<TimedState<S>> traj = new Trajectory<TimedState<S>>(waypoints);
-    traj.setDefaultVelocity(defaultVelocity);
+    Trajectory<TimedState<S>> traj = new Trajectory<>(waypoints);
     return traj;
   }
 
@@ -55,20 +54,20 @@ public class TrajectoryUtil {
   public static <S extends IState<S>> Trajectory<S> resample(
       final ITrajectoryView<S> trajectory_view, double interval) {
     if (interval <= Util.EPSILON_VALUE) {
-      return new Trajectory<S>();
+      return new Trajectory<>();
     }
     final int num_states =
         (int)
             Math.ceil(
                 (trajectory_view.last_interpolant() - trajectory_view.first_interpolant())
                     / interval);
-    ArrayList<S> states = new ArrayList<S>(num_states);
+    ArrayList<S> states = new ArrayList<>(num_states);
 
     for (int i = 0; i < num_states; ++i) {
       states.add(
           trajectory_view.sample(i * interval + trajectory_view.first_interpolant()).state());
     }
-    return new Trajectory<S>(states);
+    return new Trajectory<>(states);
   }
 
   public static Trajectory<Pose2dWithCurvature> trajectoryFromPathFollower(
@@ -76,7 +75,7 @@ public class TrajectoryUtil {
       Pose2dWithCurvature start_state,
       double step_size,
       double dcurvature_limit) {
-    List<Pose2dWithCurvature> samples = new ArrayList<Pose2dWithCurvature>();
+    List<Pose2dWithCurvature> samples = new ArrayList<>();
     samples.add(start_state);
     Pose2dWithCurvature current_state = start_state;
     while (!path_follower.isDone()) {
@@ -132,16 +131,14 @@ public class TrajectoryUtil {
       }
     }
 
-    return new Trajectory<Pose2dWithCurvature>(samples);
+    return new Trajectory<>(samples);
   }
 
   public static Trajectory<Pose2dWithCurvature> trajectoryFromSplineWaypoints(
       final List<Pose2d> waypoints, double maxDx, double maxDy, double maxDTheta) {
     List<QuinticHermiteSpline> splines = new ArrayList<>(waypoints.size() - 1);
-    // List<CubicHermiteSpline> splines = new ArrayList<>(waypoints.size() - 1);
     for (int i = 1; i < waypoints.size(); ++i) {
       splines.add(new QuinticHermiteSpline(waypoints.get(i - 1), waypoints.get(i)));
-      // splines.add(new CubicHermiteSpline(waypoints.get(i - 1), waypoints.get(i)));
     }
 
     QuinticHermiteSpline.optimizeSpline(splines);
@@ -151,14 +148,5 @@ public class TrajectoryUtil {
   public static Trajectory<Pose2dWithCurvature> trajectoryFromSplines(
       final List<? extends Spline> splines, double maxDx, double maxDy, double maxDTheta) {
     return new Trajectory<>(SplineGenerator.parameterizeSplines(splines, maxDx, maxDy, maxDTheta));
-  }
-
-  public static Trajectory<Pose2dWithCurvature> trajectoryFromWaypoints(
-      final List<Pose2d> waypoints) {
-    List<Pose2dWithCurvature> states = new ArrayList<>();
-    for (int i = 0; i < waypoints.size(); ++i) {
-      states.add(new Pose2dWithCurvature(waypoints.get(i), 0.0));
-    }
-    return new Trajectory<>(states);
   }
 }

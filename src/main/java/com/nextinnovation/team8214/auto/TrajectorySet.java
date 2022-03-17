@@ -53,12 +53,7 @@ public class TrajectorySet {
 
     // ! Since trajectory generator can't set swerve kinematics constraint, so the max translation
     // ! velocity should be adjusted manually.
-    return TrajectoryGenerator.generateSwerveTrajectory(
-        TrajectoryGenerator.TrajectorySplineType.QUINTIC_HERMITE_SPLINE,
-        false,
-        waypoints,
-        50.0,
-        0.3);
+    return TrajectoryGenerator.generateSwerveTrajectory(false, waypoints, 50.0);
   }
 
   private Trajectory<TimedState<Pose2dWithCurvature>> getBottomStartToBottomBall() {
@@ -68,12 +63,7 @@ public class TrajectorySet {
 
     // ! Since trajectory generator can't set swerve kinematics constraint, so the max translation
     // ! velocity should be adjusted manually.
-    return TrajectoryGenerator.generateSwerveTrajectory(
-        TrajectoryGenerator.TrajectorySplineType.QUINTIC_HERMITE_SPLINE,
-        false,
-        waypoints,
-        110.0,
-        0.3);
+    return TrajectoryGenerator.generateSwerveTrajectory(false, waypoints, 110.0);
   }
 
   private Trajectory<TimedState<Pose2dWithCurvature>> getBottomBallToMidBall() {
@@ -83,12 +73,7 @@ public class TrajectorySet {
 
     // ! Since trajectory generator can't set swerve kinematics constraint, so the max translation
     // ! velocity should be adjusted manually.
-    return TrajectoryGenerator.generateSwerveTrajectory(
-        TrajectoryGenerator.TrajectorySplineType.QUINTIC_HERMITE_SPLINE,
-        false,
-        waypoints,
-        90.0,
-        0.3);
+    return TrajectoryGenerator.generateSwerveTrajectory(false, waypoints, 90.0);
   }
 
   private Trajectory<TimedState<Pose2dWithCurvature>> getMidBallToHumanStationBall() {
@@ -98,12 +83,7 @@ public class TrajectorySet {
 
     // ! Since trajectory generator can't set swerve kinematics constraint, so the max translation
     // ! velocity should be adjusted manually.
-    return TrajectoryGenerator.generateSwerveTrajectory(
-        TrajectoryGenerator.TrajectorySplineType.QUINTIC_HERMITE_SPLINE,
-        false,
-        waypoints,
-        110.0,
-        0.3);
+    return TrajectoryGenerator.generateSwerveTrajectory(false, waypoints, 110.0);
   }
 
   private Trajectory<TimedState<Pose2dWithCurvature>> getHumanStationBallToEndRobotShootPoint() {
@@ -113,11 +93,6 @@ public class TrajectorySet {
 
     // ! Since trajectory generator can't set swerve kinematics constraint, so the max translation
     // ! velocity should be adjusted manually.
-    return TrajectoryGenerator.generateSwerveTrajectory(
-        TrajectoryGenerator.TrajectorySplineType.QUINTIC_HERMITE_SPLINE,
-        false,
-        waypoints,
-        150.0,
-        0.3);
+    return TrajectoryGenerator.generateSwerveTrajectory(false, waypoints, 150.0);
   }
 }

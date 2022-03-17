@@ -10,26 +10,15 @@ public class Trajectory<S extends IState<S>> implements ICSVWritable {
   protected final List<TrajectoryPoint<S>> points_;
   protected final IndexView index_view_ = new IndexView();
 
-  protected double default_velocity = 0.0;
-
-  public void setDefaultVelocity(double default_velocity) {
-    this.default_velocity = default_velocity;
-  }
-
-  public double defaultVelocity() {
-    return default_velocity;
-  }
-
   /** Create an empty trajectory. */
   public Trajectory() {
-    points_ = new ArrayList<TrajectoryPoint<S>>();
+    points_ = new ArrayList<>();
   }
 
   /**
    * Create a trajectory from the given states and transforms.
    *
    * @param states The states of the trajectory.
-   * @throws InvalidTrajectoryException
    */
   public Trajectory(final List<S> states) {
     points_ = new ArrayList<>(states.size());
