@@ -31,12 +31,12 @@ public class DriveMotionPlanner {
   private TrajectoryIterator<TimedState<Pose2dWithCurvature>> currentTrajectory;
 
   /**
-   * Constructor of DriveMotionPlanner.
+   * Constructor of DriveMotionPlanner
    *
-   * @param min_lookahead_time_secs Min lookahead time in seconds.
-   * @param min_lookahead_distance_inches Min chassis lookahead distance in inches.
-   * @param chassis_max_velocity_inches_per_second chassis max velocity in inch/s.
-   * @param min_normalized_drive_speed Min normalized follow speed.
+   * @param min_lookahead_time_secs Min lookahead time in seconds
+   * @param min_lookahead_distance_inches Min chassis lookahead distance in inches
+   * @param chassis_max_velocity_inches_per_second chassis max velocity in inch/s
+   * @param min_normalized_drive_speed Min normalized follow speed
    * @param follower_type Type of follower(PID, Pure Pursuit...)
    */
   public DriveMotionPlanner(
@@ -58,7 +58,7 @@ public class DriveMotionPlanner {
   }
 
   /**
-   * Set the robot centric following center.
+   * Set the robot centric following center
    *
    * @param following_center Robot centric following center
    */
@@ -67,9 +67,9 @@ public class DriveMotionPlanner {
   }
 
   /**
-   * Set the trajectory to follow.
+   * Set the trajectory to follow
    *
-   * @param new_trajectory The trajectory to follow, usually created by TrajectoryGenerator.
+   * @param new_trajectory The trajectory to follow, usually created by TrajectoryGenerator
    */
   public void setTrajectory(
       final TrajectoryIterator<TimedState<Pose2dWithCurvature>> new_trajectory) {
@@ -89,9 +89,9 @@ public class DriveMotionPlanner {
   }
 
   /**
-   * Get remain time for trajectory to follow.
+   * Get remain time for trajectory to follow
    *
-   * @return remain time in seconds.
+   * @return remain time in seconds
    */
   public double getTrajectoryRemainingProgress() {
     if (currentTrajectory != null) {
@@ -102,9 +102,9 @@ public class DriveMotionPlanner {
   }
 
   /**
-   * Get normalized trajectory progress.
+   * Get normalized trajectory progress
    *
-   * @return Normalized progress of trajectory.
+   * @return Normalized progress of trajectory
    */
   public double getNormalizedProgress() {
     return currentTrajectory.getProgress() / currentTrajectoryLength;
@@ -112,9 +112,9 @@ public class DriveMotionPlanner {
 
   /**
    * Get normalized output of motion planner, which is a normalized drive vector according to max
-   * allowable velocity of chassis.
+   * allowable velocity of chassis
    *
-   * @return A normalized drive vector for chassis. For holonomic chassis this can be used directly.
+   * @return A normalized drive vector for chassis. For holonomic chassis this can be used directly
    */
   public Translation2d getNormalizedOutput() {
     return output;
@@ -122,9 +122,9 @@ public class DriveMotionPlanner {
 
   /**
    * Get normalized constrain of rotation speed, which is a normalized drive vector according to max
-   * allowable velocity of chassis.
+   * allowable velocity of chassis
    *
-   * @return A normalized constrain of rotation speed.
+   * @return A normalized constrain of rotation speed
    */
   public double getNormalizedMaxRotationSpeed() {
     // TODO: Maybe add a dynamic rotation constraint.
@@ -132,19 +132,19 @@ public class DriveMotionPlanner {
   }
 
   /**
-   * Get is trajectory done.
+   * Get is trajectory done
    *
-   * @return Is trajectory done.
+   * @return Is trajectory done
    */
   public boolean isDone() {
     return currentTrajectory != null && currentTrajectory.isDone();
   }
 
   /**
-   * Update create a normalized drive vector for chassis by adaptive pure pursuit.
+   * Update create a normalized drive vector for chassis by adaptive pure pursuit
    *
-   * @param current_state Current pose2d of robot.
-   * @return A normalized drive vector output. Can be also get by getNormalizedOutput().
+   * @param current_state Current pose2d of robot
+   * @return A normalized drive vector output. Can be also get by getNormalizedOutput()
    */
   private Translation2d updateAdaptivePurePursuit(Pose2d current_state) {
     double lookaheadTime = minLookaheadTimeSecs;
@@ -198,7 +198,7 @@ public class DriveMotionPlanner {
     return Translation2d.fromPolar(steeringDirection, normalizedSpeed);
   }
 
-  /** Update find a proper setpoint to reach. */
+  /** Update find a proper setpoint to reach */
   private void updateProperSetpoint(Pose2d current_state) {
     // These code try to find a proper setpoint to reach.
     double searchStepSize = 1.0;
@@ -224,10 +224,10 @@ public class DriveMotionPlanner {
   }
 
   /**
-   * Update create a normalized drive vector for chassis by selected follower type.
+   * Update create a normalized drive vector for chassis by selected follower type
    *
-   * @param current_state Current pose2d of robot.
-   * @return A normalized drive vector output. Can be also get by getNormalizedOutput().
+   * @param current_state Current pose2d of robot
+   * @return A normalized drive vector output. Can be also get by getNormalizedOutput()
    */
   public Translation2d update(Pose2d current_state) {
     if (currentTrajectory == null) {
@@ -253,10 +253,10 @@ public class DriveMotionPlanner {
   }
 
   /**
-   * Update create a normalized drive vector for chassis by selected follower type.
+   * Update create a normalized drive vector for chassis by selected follower type
    *
-   * @param current_state Current pose2d of robot.
-   * @param additional_progress lookahead progress.
+   * @param current_state Current pose2d of robot
+   * @param additional_progress lookahead progress
    * @return The distance in inches.
    */
   private double distance(Pose2d current_state, double additional_progress) {

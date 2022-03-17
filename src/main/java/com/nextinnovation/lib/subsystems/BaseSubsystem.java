@@ -16,16 +16,16 @@ import edu.wpi.first.wpilibj.Timer;
  */
 public abstract class BaseSubsystem {
   private double timeCostPerLoopSecs = 255.0;
-  private double startTimeStamp = 0.0;
+  private double startTimestamp = 0.0;
 
   /** Start to count time cost */
   public void startCountTimeCost() {
-    startTimeStamp = Timer.getFPGATimestamp();
+    startTimestamp = Timer.getFPGATimestamp();
   }
 
   /** End to count time cost */
   public void endCountTimeCost() {
-    timeCostPerLoopSecs = Timer.getFPGATimestamp() - startTimeStamp;
+    timeCostPerLoopSecs = Timer.getFPGATimestamp() - startTimestamp;
   }
 
   /**
