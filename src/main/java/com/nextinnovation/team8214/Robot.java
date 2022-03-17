@@ -162,7 +162,12 @@ public class Robot extends TimedRobot {
 
   @Override
   public void disabledPeriodic() {
-    autoModeChooser.updateSelectedAutoMode();
+    try {
+      autoModeChooser.updateSelectedAutoMode();
+    } catch (Throwable t) {
+      CrashTracker.logThrowableCrash(t);
+      throw t;
+    }
   }
 
   /** This function is called once when test mode is enabled. */
