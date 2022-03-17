@@ -10,6 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TrajectorySet {
+  /***********************************************************************************************
+   * Singleton *
+   ***********************************************************************************************/
   private static TrajectorySet instance = null;
 
   public static synchronized TrajectorySet getInstance() {
@@ -19,26 +22,37 @@ public class TrajectorySet {
     return instance;
   }
 
+  /***********************************************************************************************
+   * Init & Config *
+   ***********************************************************************************************/
   public final Trajectory<TimedState<Pose2dWithCurvature>> topStartToTopBall;
+
   public final Trajectory<TimedState<Pose2dWithCurvature>> bottomStartToBottomBall;
   public final Trajectory<TimedState<Pose2dWithCurvature>> bottomBallToMidBall;
   public final Trajectory<TimedState<Pose2dWithCurvature>> midBallToHumanStationBall;
   public final Trajectory<TimedState<Pose2dWithCurvature>> humanStationBallToEndRobotShootPoint;
 
   private TrajectorySet() {
+    // Top
     topStartToTopBall = getTopStartToTopBall();
 
+    // Bottom
     bottomStartToBottomBall = getBottomStartToBottomBall();
     bottomBallToMidBall = getBottomBallToMidBall();
     midBallToHumanStationBall = getMidBallToHumanStationBall();
     humanStationBallToEndRobotShootPoint = getHumanStationBallToEndRobotShootPoint();
   }
 
+  /************************************************************************************************
+   * Getter & Setter *
+   ************************************************************************************************/
   private Trajectory<TimedState<Pose2dWithCurvature>> getTopStartToTopBall() {
     List<Pose2d> waypoints = new ArrayList<>();
     waypoints.add(Field.CriticalWaypoints.TOP_START_ROBOT_POSE);
     waypoints.add(Field.CriticalWaypoints.TOP_BALL_COLLECT_POSE);
 
+    // ! Since trajectory generator can't set swerve kinematics constraint, so the max translation
+    // ! velocity should be adjusted manually.
     return TrajectoryGenerator.generateSwerveTrajectory(
         TrajectoryGenerator.TrajectorySplineType.QUINTIC_HERMITE_SPLINE,
         false,
@@ -52,6 +66,8 @@ public class TrajectorySet {
     waypoints.add(Field.CriticalWaypoints.BOTTOM_START_ROBOT_POSE);
     waypoints.add(Field.CriticalWaypoints.BOTTOM_BALL_COLLECT_POSE);
 
+    // ! Since trajectory generator can't set swerve kinematics constraint, so the max translation
+    // ! velocity should be adjusted manually.
     return TrajectoryGenerator.generateSwerveTrajectory(
         TrajectoryGenerator.TrajectorySplineType.QUINTIC_HERMITE_SPLINE,
         false,
@@ -65,6 +81,8 @@ public class TrajectorySet {
     waypoints.add(Field.CriticalWaypoints.BOTTOM_BALL_COLLECT_FLIPPED_POSE);
     waypoints.add(Field.CriticalWaypoints.MID_BALL_COLLECT_POSE);
 
+    // ! Since trajectory generator can't set swerve kinematics constraint, so the max translation
+    // ! velocity should be adjusted manually.
     return TrajectoryGenerator.generateSwerveTrajectory(
         TrajectoryGenerator.TrajectorySplineType.QUINTIC_HERMITE_SPLINE,
         false,
@@ -78,6 +96,8 @@ public class TrajectorySet {
     waypoints.add(Field.CriticalWaypoints.MID_BALL_COLLECT_POSE);
     waypoints.add(Field.CriticalWaypoints.HUMAN_STATION_BALL_COLLECT_POSE);
 
+    // ! Since trajectory generator can't set swerve kinematics constraint, so the max translation
+    // ! velocity should be adjusted manually.
     return TrajectoryGenerator.generateSwerveTrajectory(
         TrajectoryGenerator.TrajectorySplineType.QUINTIC_HERMITE_SPLINE,
         false,
@@ -91,6 +111,8 @@ public class TrajectorySet {
     waypoints.add(Field.CriticalWaypoints.HUMAN_STATION_BALL_COLLECT_FLIPPED_POSE);
     waypoints.add(Field.CriticalWaypoints.BOTTOM_END_ROBOT_SHOOT_FLIPPED_POSE);
 
+    // ! Since trajectory generator can't set swerve kinematics constraint, so the max translation
+    // ! velocity should be adjusted manually.
     return TrajectoryGenerator.generateSwerveTrajectory(
         TrajectoryGenerator.TrajectorySplineType.QUINTIC_HERMITE_SPLINE,
         false,
