@@ -53,6 +53,7 @@ public class Robot extends TimedRobot {
   private void initAutoTools() {
     trajectorySet = TrajectorySet.getInstance();
     autoModeChooser = AutoModeChooser.getInstance();
+    autoModeExecuter = AutoModeExecuter.getInstance();
   }
 
   /**
@@ -109,7 +110,6 @@ public class Robot extends TimedRobot {
       controlLooper.start();
       logLooper.start();
 
-      autoModeExecuter = new AutoModeExecuter();
       autoModeExecuter.setAutoMode(autoModeChooser.getSelectedAutoMode());
       autoModeExecuter.start();
     } catch (Throwable t) {
@@ -158,6 +158,11 @@ public class Robot extends TimedRobot {
       CrashTracker.logThrowableCrash(t);
       throw t;
     }
+  }
+
+  @Override
+  public void disabledPeriodic() {
+    autoModeChooser.updateSelectedAutoMode();
   }
 
   /** This function is called once when test mode is enabled. */

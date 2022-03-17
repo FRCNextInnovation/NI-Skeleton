@@ -73,6 +73,13 @@ public class Pigeon {
     pigeon.setFusedHeading(-yawDegrees, this.canTimeoutMs);
   }
 
+  /**
+   * Basic method to config status frame period
+   *
+   * @param period Delta period in ms
+   * @param enableControl Is control need.
+   * @param canTimeoutMs CAN time out in ms
+   */
   public synchronized void configStatusFramePeriod(
       int period, boolean enableControl, int canTimeoutMs) {
     period = Math.min(period, MAX_STATUS_FRAME_PERIOD);

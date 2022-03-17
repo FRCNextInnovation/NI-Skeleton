@@ -35,33 +35,34 @@ public class AutoModeChooser {
   }
 
   private static final AutoOption DEFAULT_MODE = AutoOption.BOTTOM_5_BALLS;
+  private static final Alliance DEFAULT_ALLIANCE = Alliance.RED;
   private final SendableChooser<AutoOption> modeChooser;
   private final SendableChooser<Alliance> allianceChooser;
+  private AutoOption selectedOption;
+  private Alliance selectedAlliance;
 
   private AutoModeChooser() {
     // Mode Chooser
     modeChooser = new SendableChooser<>();
-    modeChooser.setDefaultOption(AutoOption.BOTTOM_5_BALLS.name, AutoOption.BOTTOM_5_BALLS);
+    modeChooser.setDefaultOption(DEFAULT_MODE.name, DEFAULT_MODE);
     modeChooser.addOption(AutoOption.SILENCE.name, AutoOption.SILENCE);
     modeChooser.addOption(AutoOption.TOP_2_BALLS.name, AutoOption.TOP_2_BALLS);
 
     // Alliance Chooser
     allianceChooser = new SendableChooser<>();
-    allianceChooser.setDefaultOption("Blue", Alliance.BLUE);
+    modeChooser.setDefaultOption(AutoOption.BOTTOM_5_BALLS.name, AutoOption.BOTTOM_5_BALLS);
     allianceChooser.addOption("Red", Alliance.RED);
 
-    SmartDashboard.putData("Mode Chooser", modeChooser);
-    SmartDashboard.putData("Alliance Chooser", allianceChooser);
-    SmartDashboard.putString("Selected Auto Mode", DEFAULT_MODE.name);
+    selectedOption = DEFAULT_MODE;
+    selectedAlliance = DEFAULT_ALLIANCE;
   }
 
-  public boolean isStandardCarpetSide() {
-    return allianceChooser.getSelected() == Alliance.BLUE;
+  public synchronized void updateSelectedAutoMode() {
+    selectedOption = modeChooser.getSelected();
+    selectedAlliance = allianceChooser.getSelected();
   }
 
   public BaseAutoMode getSelectedAutoMode() {
-    AutoOption selectedOption = modeChooser.getSelected();
-
     return createAutoMode(selectedOption);
   }
 
@@ -79,7 +80,13 @@ public class AutoModeChooser {
     }
   }
 
+  public boolean isStandardCarpetSide() {
+    return selectedAlliance == Alliance.BLUE;
+  }
+
   public void logToSmartDashboard() {
+    SmartDashboard.putData("Mode Chooser", modeChooser);
+    SmartDashboard.putData("Alliance Chooser", allianceChooser);
     SmartDashboard.putString("Selected Alliance", allianceChooser.getSelected().name());
     SmartDashboard.putString("Selected Auto Mode", modeChooser.getSelected().name);
   }

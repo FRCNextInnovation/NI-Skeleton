@@ -18,6 +18,14 @@ public class LazyTalonFX extends TalonFX {
     configFactoryDefault();
   }
 
+  /**
+   * Basic method to config status frame period
+   *
+   * @param period Delta period in ms
+   * @param enableFeedback Is feedback control need
+   * @param enableCurrentDebug Is current debug need
+   * @param canTimeoutMs CAN time out in ms
+   */
   public void configStatusFramePeriod(
       int period, boolean enableFeedback, boolean enableCurrentDebug, int canTimeoutMs) {
     period = Math.min(period, MAX_STATUS_FRAME_PERIOD);
@@ -33,6 +41,11 @@ public class LazyTalonFX extends TalonFX {
     }
   }
 
+  /**
+   * Basic method to config status frame period for slave
+   *
+   * @param canTimeoutMs CAN time out in ms
+   */
   public void configSlaveStatusFramePeriod(int canTimeoutMs) {
     setStatusFramePeriod(StatusFrame.Status_1_General, MAX_STATUS_FRAME_PERIOD, canTimeoutMs);
     setStatusFramePeriod(StatusFrame.Status_2_Feedback0, MAX_STATUS_FRAME_PERIOD, canTimeoutMs);
