@@ -24,7 +24,7 @@ public class OdometryFusingManager {
    ***********************************************************************************************/
   private static final int ODOMETRY_SAMPLE_SIZE = 80;
 
-  // Pose: Delta translation with heading.
+  // ! Pose: Delta translation with heading.
   private InterpolatingTreeMap<InterpolatingDouble, Pose2d> chassisWODeltaTranslationMap;
 
   private InterpolatingTreeMap<InterpolatingDouble, Pose2d> fusedOdometry;
@@ -53,6 +53,7 @@ public class OdometryFusingManager {
     return fusedOdometry.lastEntry().getValue();
   }
 
+  // ! Real WO are kept in swerve.
   public synchronized void addChassisWODeltaTranslationMap(
       double timestamp, Translation2d delta_position, Rotation2d currant_heading) {
     // ! All pose & translation here is field centric.
