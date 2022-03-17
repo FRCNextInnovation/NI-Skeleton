@@ -238,8 +238,8 @@ public class Swerve extends BaseSubsystem {
   }
 
   public synchronized void configHeadingController(
-      double kp, double ki, double kd, double errorTolerance) {
-    headingController.configParmas(kp, ki, kd, errorTolerance);
+      double kp, double ki, double kd, double error_tolerance) {
+    headingController.configParmas(kp, ki, kd, error_tolerance);
   }
 
   /************************************************************************************************
@@ -307,41 +307,41 @@ public class Swerve extends BaseSubsystem {
     return periodicInput.ahrsAngularVelocity;
   }
 
-  public synchronized void setTargetHeading(Rotation2d targetAbsoluteHeadingDegrees) {
-    headingController.setTargetHeading(targetAbsoluteHeadingDegrees);
+  public synchronized void setTargetHeading(Rotation2d target_absolute_heading_degrees) {
+    headingController.setTargetHeading(target_absolute_heading_degrees);
   }
 
-  public synchronized void setTargetHeading(double targetAbsoluteHeadingDegrees) {
+  public synchronized void setTargetHeading(double target_absolute_heading_degrees) {
     headingController.setTargetHeading(
-        new Rotation2d(Util.boundAngleTo0To360Degrees(targetAbsoluteHeadingDegrees)));
+        new Rotation2d(Util.boundAngleTo0To360Degrees(target_absolute_heading_degrees)));
   }
 
   public synchronized void setTargetHeadingToCurrentHeading() {
     setTargetHeading(periodicInput.ahrsHeading);
   }
 
-  public synchronized void setModulesAlign(Rotation2d heading, boolean isFieldCentric) {
+  public synchronized void setModulesAlign(Rotation2d heading, boolean is_field_centric) {
     List<Rotation2d> headings = new ArrayList<>(modules.size());
     for (int i = 0; i < modules.size(); i++) {
       headings.add(
-          isFieldCentric ? heading.rotateBy(periodicInput.ahrsHeading.inverse()) : heading);
+          is_field_centric ? heading.rotateBy(periodicInput.ahrsHeading.inverse()) : heading);
     }
     setModuleHeadingTargets(headings);
   }
 
   private synchronized void setNormalizedModuleVelocityTargets(
-      List<Translation2d> moduleVelocities, boolean enableClosedLoopControl) {
+      List<Translation2d> module_velocities, boolean enable_closed_loop_control) {
     for (int i = 0; i < modules.size(); i++) {
       SwerveDriveModule module = modules.get(i);
-      Translation2d moduleVelocity = moduleVelocities.get(i);
+      Translation2d moduleVelocity = module_velocities.get(i);
       if (Util.shouldReverseRotation(
-          moduleVelocities.get(i).direction().getDegrees(),
+          module_velocities.get(i).direction().getDegrees(),
           modules.get(i).getRobotCentricRotationHeading().getDegrees())) {
         if (!Util.epsilonEquals(moduleVelocity.norm(), 0.0)) {
           module.setRotationHeadingTarget(
               moduleVelocity.direction().rotateBy(Rotation2d.fromDegrees(180.0)));
         }
-        if (enableClosedLoopControl) {
+        if (enable_closed_loop_control) {
           module.setNormalizedTranslationVelocityTarget(-moduleVelocity.norm());
         } else {
           module.setTranslationOpenLoop(-moduleVelocity.norm());
@@ -350,7 +350,7 @@ public class Swerve extends BaseSubsystem {
         if (!Util.epsilonEquals(moduleVelocity.norm(), 0.0)) {
           module.setRotationHeadingTarget(moduleVelocity.direction());
         }
-        if (enableClosedLoopControl) {
+        if (enable_closed_loop_control) {
           module.setNormalizedTranslationVelocityTarget(moduleVelocity.norm());
         } else {
           module.setTranslationOpenLoop(moduleVelocity.norm());
@@ -361,19 +361,19 @@ public class Swerve extends BaseSubsystem {
 
   public synchronized void setTrajectory(
       Trajectory<TimedState<Pose2dWithCurvature>> trajectory,
-      Translation2d followingCenter,
-      double targetHeading) {
+      Translation2d following_center,
+      double target_heading) {
     setState(SwerveState.TRAJECTORY);
-    setTargetHeading(targetHeading);
+    setTargetHeading(target_heading);
     driveMotionPlanner.reset();
-    driveMotionPlanner.setFollowingCenter(followingCenter);
+    driveMotionPlanner.setFollowingCenter(following_center);
     driveMotionPlanner.setTrajectory(new TrajectoryIterator<>(new TimedView<>(trajectory)));
   }
 
   public synchronized void setTrajectory(
-      Trajectory<TimedState<Pose2dWithCurvature>> trajectory, double goalHeading) {
+      Trajectory<TimedState<Pose2dWithCurvature>> trajectory, double target_heading) {
     System.out.println("setTrajectory enter swerve class");
-    setTrajectory(trajectory, Translation2d.identity(), goalHeading);
+    setTrajectory(trajectory, Translation2d.identity(), target_heading);
   }
 
   public boolean isDoneWithTrajectory() {
@@ -401,17 +401,17 @@ public class Swerve extends BaseSubsystem {
     return true;
   }
 
-  private synchronized void setModuleHeadingTargets(List<Rotation2d> moduleRotationHeadings) {
+  private synchronized void setModuleHeadingTargets(List<Rotation2d> module_rotation_headings) {
     for (int i = 0; i < modules.size(); i++) {
       if (Util.shouldReverseRotation(
-          moduleRotationHeadings.get(i).getDegrees(),
+          module_rotation_headings.get(i).getDegrees(),
           modules.get(i).getRobotCentricRotationHeading().getDegrees())) {
         modules
             .get(i)
             .setRotationHeadingTarget(
-                moduleRotationHeadings.get(i).rotateBy(Rotation2d.fromDegrees(180.0)));
+                module_rotation_headings.get(i).rotateBy(Rotation2d.fromDegrees(180.0)));
       } else {
-        modules.get(i).setRotationHeadingTarget(moduleRotationHeadings.get(i));
+        modules.get(i).setRotationHeadingTarget(module_rotation_headings.get(i));
       }
     }
   }
@@ -441,32 +441,49 @@ public class Swerve extends BaseSubsystem {
         (module) -> module.setModulePositionFromRobotPose(kinematics.getPose()));
   }
 
+  /**
+   * Update set normalized translation and rotation velocity of swerve, usually used in teleop mode
+   *
+   * @param translation_vector Normalized translation vector in [-1.0, 1.0]
+   * @param rotation_magnitude Normalized magnitude vector in [-1.0, 1.0]
+   * @param enable_closed_loop_Control Is module translation motor Velocity or Percent Output mode
+   * @param timestamp Current timestamp in FPGA timer
+   */
   public synchronized void updateNormalizedVectorialVelocityControl(
-      Translation2d translationVector,
-      double rotationMagnitude,
-      boolean enableClosedLoopControl,
+      Translation2d translation_vector,
+      double rotation_magnitude,
+      boolean enable_closed_loop_Control,
       double timestamp) {
     setNormalizedModuleVelocityTargets(
         inverseKinematics.calculateNormalizedModuleVelocities(
-            translationVector,
-            rotationMagnitude + headingController.calculate(getFieldCentricHeading(), timestamp),
+            translation_vector,
+            rotation_magnitude + headingController.calculate(getFieldCentricHeading(), timestamp),
             getFieldCentricHeading()),
-        enableClosedLoopControl);
+        enable_closed_loop_Control);
   }
 
+  /**
+   * Update set normalized translation velocity swerve, rotation velocity are only gave by heading
+   * controller, usually used in trajectory mode.
+   *
+   * @param translation_vector Normalized translation vector in [-1.0, 1.0]
+   * @param max_rotation_magnitude Normalized max magnitude vector, usually gave by motion planner
+   * @param enable_closed_loop_Control Is module translation motor Velocity or Percent Output mode
+   * @param timestamp Current timestamp in FPGA timer
+   */
   public synchronized void updateNormalizedTranslationVelocityControl(
-      Translation2d translationVector,
-      double maxRotationMagnitude,
-      boolean enableClosedLoopControl,
+      Translation2d translation_vector,
+      double max_rotation_magnitude,
+      boolean enable_closed_loop_Control,
       double timestamp) {
     setNormalizedModuleVelocityTargets(
         inverseKinematics.calculateNormalizedModuleVelocities(
-            translationVector,
+            translation_vector,
             Util.limit(
                 headingController.calculate(getFieldCentricHeading(), timestamp),
-                maxRotationMagnitude),
+                max_rotation_magnitude),
             getFieldCentricHeading()),
-        enableClosedLoopControl);
+        enable_closed_loop_Control);
   }
 
   /************************************************************************************************

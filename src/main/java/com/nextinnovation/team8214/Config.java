@@ -21,8 +21,8 @@ public final class Config {
   public static final double LOOPER_LOG_PERIOD_SEC = 0.04;
 
   // CAN
-  public static final int CAN_TIMEOUT_MS = 90;
-  public static final int CAN_INSTANT_TIMEOUT_MS = 90;
+  public static final int CAN_TIMEOUT_MS = 100;
+  public static final int CAN_INSTANT_TIMEOUT_MS = 30;
 
   // Log
   public static final boolean ENABLE_DEBUG_OUTPUT = true;

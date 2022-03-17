@@ -74,15 +74,25 @@ public class SwerveDriveModule extends BaseSubsystem {
   private final PeriodicOutput periodicOutput = new PeriodicOutput();
   private final CANCoder externalRotationEncoder;
 
+  /**
+   * Constructor
+   *
+   * @param module_id ID of module:[1, 4], usually FL -> 1, RL -> 2, RR -> 3, FR -> 4
+   * @param translation_motor_id CAN ID of translation motor
+   * @param rotation_motor_id CAN ID of translation motor
+   * @param external_rotation_encoder_id CAN ID of CANCoder
+   * @param rotation_calibration_offset Calibration offset by CANCoder
+   * @param module_position_to_robot_centric Module position related to robot centric in inch
+   */
   public SwerveDriveModule(
-      int module_ID,
-      int drive_motor_id,
+      int module_id,
+      int translation_motor_id,
       int rotation_motor_id,
       int external_rotation_encoder_id,
       int rotation_calibration_offset,
       Translation2d module_position_to_robot_centric) {
-    moduleName = "Swerve Module " + module_ID + " ";
-    translationMotor = new LazyTalonFX(drive_motor_id);
+    moduleName = "Swerve Module " + module_id + " ";
+    translationMotor = new LazyTalonFX(translation_motor_id);
     rotationMotor = new LazyTalonFX(rotation_motor_id);
     externalRotationEncoder = new CANCoder(external_rotation_encoder_id);
     rotationCalibrationOffset = rotation_calibration_offset;
@@ -283,21 +293,21 @@ public class SwerveDriveModule extends BaseSubsystem {
         periodicInput.translationMotorEncoderVelocity);
   }
 
-  public synchronized void setTranslationVelocityTarget(double velocityInchesPerSecond) {
+  public synchronized void setTranslationVelocityTarget(double velocity_inches_per_second) {
     periodicOutput.translationMotorControlMode = ControlMode.Velocity;
     periodicOutput.translationMotorSetpoint =
-        inchesPerSecondToTranslationEncoderVelocity(velocityInchesPerSecond);
+        inchesPerSecondToTranslationEncoderVelocity(velocity_inches_per_second);
   }
 
-  public synchronized void setNormalizedTranslationVelocityTarget(double normalizedVelocity) {
+  public synchronized void setNormalizedTranslationVelocityTarget(double normalized_velocity) {
     periodicOutput.translationMotorControlMode = ControlMode.Velocity;
     periodicOutput.translationMotorSetpoint =
-        SwerveDriveModuleConfig.Translation.MAX_CRUISE_SPEED * normalizedVelocity;
+        SwerveDriveModuleConfig.Translation.MAX_CRUISE_SPEED * normalized_velocity;
   }
 
-  public synchronized void setTranslationOpenLoop(double normalizedOutput) {
+  public synchronized void setTranslationOpenLoop(double normalized_output) {
     periodicOutput.translationMotorControlMode = ControlMode.PercentOutput;
-    periodicOutput.translationMotorSetpoint = normalizedOutput;
+    periodicOutput.translationMotorSetpoint = normalized_output;
   }
 
   public boolean isTranslationVelocityOnTarget() {
@@ -320,16 +330,16 @@ public class SwerveDriveModule extends BaseSubsystem {
         getRawRotationHeading() - rotationEncoderUnitsToDegrees(rotationCalibrationOffset));
   }
 
-  public Rotation2d getFieldCentricRotationHeading(Rotation2d robotHeading) {
-    return getRobotCentricRotationHeading().rotateBy(robotHeading);
+  public Rotation2d getFieldCentricRotationHeading(Rotation2d robot_heading) {
+    return getRobotCentricRotationHeading().rotateBy(robot_heading);
   }
 
-  public void setRotationHeadingTarget(double headingDegrees) {
+  public void setRotationHeadingTarget(double heading_degrees) {
     periodicOutput.rotationMotorControlMode = ControlMode.MotionMagic;
     periodicOutput.rotationMotorSetpoint =
         degreesToRotationEncoderUnits(
             Util.boundAngleToClosestScope(
-                headingDegrees + rotationEncoderUnitsToDegrees(rotationCalibrationOffset),
+                heading_degrees + rotationEncoderUnitsToDegrees(rotationCalibrationOffset),
                 getRawRotationHeading()));
   }
 
@@ -348,9 +358,9 @@ public class SwerveDriveModule extends BaseSubsystem {
     return false;
   }
 
-  public synchronized void setRotationOpenLoop(double normalizedOutput) {
+  public synchronized void setRotationOpenLoop(double normalized_output) {
     periodicOutput.rotationMotorControlMode = ControlMode.PercentOutput;
-    periodicOutput.rotationMotorSetpoint = normalizedOutput;
+    periodicOutput.rotationMotorSetpoint = normalized_output;
   }
 
   public int getExternalRotationEncoderPosition() {
@@ -377,25 +387,25 @@ public class SwerveDriveModule extends BaseSubsystem {
     return estimatedRobotPose;
   }
 
-  public synchronized void setModulePosition(Translation2d modulePosition) {
-    this.modulePosition = modulePosition;
+  public synchronized void setModulePosition(Translation2d module_position) {
+    this.modulePosition = module_position;
   }
 
-  public synchronized void setModulePositionFromRobotPose(Pose2d robotPose) {
+  public synchronized void setModulePositionFromRobotPose(Pose2d robot_pose) {
     setModulePosition(
-        robotPose
+        robot_pose
             .transformBy(Pose2d.fromTranslation(modulePositionToTranslationCenter))
             .getTranslation());
-    estimatedRobotPose = robotPose;
+    estimatedRobotPose = robot_pose;
   }
 
   /************************************************************************************************
    * Update *
    ************************************************************************************************/
-  public synchronized void updateOdometer(Rotation2d robotHeading) {
+  public synchronized void updateOdometer(Rotation2d robot_heading) {
     double deltaEncoderPosition =
         getTranslationDisplacement() - getPreviousTranslationDisplacement();
-    Rotation2d rotationHeading = getFieldCentricRotationHeading(robotHeading);
+    Rotation2d rotationHeading = getFieldCentricRotationHeading(robot_heading);
     double deltaTranslationX = rotationHeading.cos() * deltaEncoderPosition;
     double deltaTranslationY = rotationHeading.sin() * deltaEncoderPosition;
 
@@ -424,7 +434,7 @@ public class SwerveDriveModule extends BaseSubsystem {
 
     modulePosition = modulePosition.translateBy(deltaTranslation);
     estimatedRobotPose =
-        new Pose2d(modulePosition, robotHeading)
+        new Pose2d(modulePosition, robot_heading)
             .transformBy(Pose2d.fromTranslation(modulePositionToTranslationCenter.inverse()));
     synchronizePreviousTranslationEncoderPosition();
   }
@@ -432,28 +442,28 @@ public class SwerveDriveModule extends BaseSubsystem {
   /************************************************************************************************
    * Util *
    ************************************************************************************************/
-  private double translationEncoderUnitsToInches(double EncoderUnits) {
-    return EncoderUnits / SwerveDriveModuleConfig.Translation.ENCODER_UNITS_PER_INCH;
+  private double translationEncoderUnitsToInches(double encoder_units) {
+    return encoder_units / SwerveDriveModuleConfig.Translation.ENCODER_UNITS_PER_INCH;
   }
 
   private int inchesToTranslationEncoderUnits(double inches) {
     return Util.roundToInt(inches * SwerveDriveModuleConfig.Translation.ENCODER_UNITS_PER_INCH);
   }
 
-  private double translationEncoderVelocityToInchesPerSecond(double encoderUnitsPer100ms) {
-    return translationEncoderUnitsToInches(encoderUnitsPer100ms) * 10.0;
+  private double translationEncoderVelocityToInchesPerSecond(double encoder_units_per_100ms) {
+    return translationEncoderUnitsToInches(encoder_units_per_100ms) * 10.0;
   }
 
-  private int inchesPerSecondToTranslationEncoderVelocity(double inchesPerSecond) {
-    return Util.roundToInt(inchesToTranslationEncoderUnits(inchesPerSecond / 10.0));
+  private int inchesPerSecondToTranslationEncoderVelocity(double inches_per_second) {
+    return Util.roundToInt(inchesToTranslationEncoderUnits(inches_per_second / 10.0));
   }
 
   private int degreesToRotationEncoderUnits(double degrees) {
     return Util.roundToInt(degrees * SwerveDriveModuleConfig.Rotation.ENCODER_UNITS_PER_DEGREE);
   }
 
-  private double rotationEncoderUnitsToDegrees(double encoderUnits) {
-    return encoderUnits / SwerveDriveModuleConfig.Rotation.ENCODER_UNITS_PER_DEGREE;
+  private double rotationEncoderUnitsToDegrees(double encoder_units) {
+    return encoder_units / SwerveDriveModuleConfig.Rotation.ENCODER_UNITS_PER_DEGREE;
   }
 
   /************************************************************************************************
