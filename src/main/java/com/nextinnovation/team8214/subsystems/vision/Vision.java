@@ -6,6 +6,8 @@ import com.nextinnovation.lib.geometry.Translation2d;
 import com.nextinnovation.lib.loops.ILoop;
 import com.nextinnovation.lib.loops.ILooper;
 import com.nextinnovation.lib.subsystems.BaseSubsystem;
+import com.nextinnovation.team8214.Config;
+import com.nextinnovation.team8214.Field;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Vision extends BaseSubsystem {
@@ -142,22 +144,35 @@ public class Vision extends BaseSubsystem {
     }
   }
 
+  /**
+   * Get camera latency in ms
+   *
+   * @return camera latency in ms
+   */
   public double getLatency() {
     synchronized (ioLock) {
       return periodicInput.latency / 1000.0;
     }
   }
 
-  public double getTargetDistance(
-      Rotation2d cameraElevation, double cameraHeight, double targetHeight) {
-    return (targetHeight - cameraHeight)
-        / Math.tan(getSceneCentricTargetAngle().getRadians() + cameraElevation.getRadians());
+  /**
+   * Get camera centric distance from vision target in inch
+   *
+   * @return target distance in inch
+   */
+  public double getTargetDistance() {
+    return (Field.VISUAL_TARGET_VISUAL_CENTER_HEIGHT - VisionConfig.CAMERA_HEIGHT_INCH)
+        / Math.tan(
+            getSceneCentricTargetAngle().getRadians() + VisionConfig.CAMERA_ELEVATION.getRadians());
   }
 
-  public Translation2d getTargetOrientation(
-      Rotation2d cameraElevation, double cameraHeight, double targetHeight) {
-    return Translation2d.fromPolar(
-        getTargetHeading(), getTargetDistance(cameraElevation, cameraHeight, targetHeight));
+  /**
+   * Get camera centric orientation from vision target with distance in inch
+   *
+   * @return target distance in inch by a Translation2d
+   */
+  public Translation2d getTargetOrientation() {
+    return Translation2d.fromPolar(getTargetHeading(), getTargetDistance());
   }
 
   /************************************************************************************************
@@ -174,5 +189,13 @@ public class Vision extends BaseSubsystem {
   @Override
   public void logToSmartDashboard() {
     SmartDashboard.putString("Vision State", visionState.value);
+    SmartDashboard.putBoolean("Has Vision Target", hasTarget());
+    SmartDashboard.putBoolean("Is Vision Enabled", isEnabled());
+    if (Config.ENABLE_DEBUG_OUTPUT) {
+      SmartDashboard.putNumber("Camera Latency", getLatency());
+      if (isEnabled() && hasTarget()) {
+        SmartDashboard.putString("Target Orientation", getTargetOrientation().toString());
+      }
+    }
   }
 }

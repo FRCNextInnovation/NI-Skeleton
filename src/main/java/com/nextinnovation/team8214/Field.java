@@ -6,15 +6,14 @@ import com.nextinnovation.lib.geometry.Translation2d;
 
 public final class Field {
   // Physical Dimensions of Field Objects
-  public static final double VISUAL_TARGET_CENTER_HEIGHT = 99.09;
   public static final double VISUAL_TARGET_VISUAL_CENTER_HEIGHT = 99.08;
   public static final double UPPER_HUB_RADIANS = 0.0;
 
   public static final Rotation2d FLIP = new Rotation2d(-1.0, 0.0, false);
 
-  public static final Translation2d HUB_CENTER_POSITION = new Translation2d(-109.699, 161.746);
-
   public static final class OriginalWaypoints {
+    public static final Translation2d HUB_CENTER_POSITION = new Translation2d(-109.699, 161.746);
+
     public static final Pose2d TOP_START_ROBOT_POSITION =
         new Pose2d(new Translation2d(-202.238, 184.257), new Rotation2d(-90.0));
     public static final Pose2d TOP_BALL_POSITION =
