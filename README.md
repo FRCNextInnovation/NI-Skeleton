@@ -14,10 +14,13 @@ NI-Code-Template-Ultimate是 NI 电控组在旧代码模板的基础上，为团
 
 ## 主要改进
 
+- `IterativeRobotBase`和`TimedRobot`被部分重写，取消了`loop time overrun`的报错。
 - `disabledLooper`被取消。 
 - `BaseSubsystem`内加入了计时功能，每个`Subsystem`将自动计算自己单次`Loop`的耗时。
-- 从现在开始，每个`Looper`的频率都可以自定义 。
-- 曾经位于`Robot`级下的一些基类和执行器类被挪入`Lib`，以增强其可复用性 。
+- 从现在开始，每个`Looper`的频率都可以自定义。
+- 曾经位于`Robot`级下的一些基类和执行器类被挪入`Lib`，以增强其可复用性。
+- `AutoModeChooser`和`AutoModeExecuter`被修改为单例。
+- `AutoModeChooser`的`SelectedMode`开始支持动态刷新。
 - 原始的编程模板被简化，现在每一个具体的`subsystem`由`Subsystem`、`SubsystemState`和`SubsystemConfig`组成，后两者视实际情况可选。
 - `Subsystem`针对不同`State`的控制逻辑被挪入`Subsystem`内部实现，目的是减少嵌套和重入次数，并提高类的线程安全性。
 - `Vision`被作为`Subsystem`进行了重写。
@@ -25,7 +28,8 @@ NI-Code-Template-Ultimate是 NI 电控组在旧代码模板的基础上，为团
 - 场地数据被挪入到了`Field.java`。
 - `ControlFlagManager`重命名为`ControlSignalManager`，加入`SlewRateLimiter`以顺滑`Swerve`的驾驶。
 - `TrajectoryGenerator`更改为静态类，其中的`TrajectorySet`被单独提出为一个新的类。
-- `TimingUtil`的接口改进，`MAX_DECEL`和`SLOWDOWN_CHUNKS`被取消。
+- `TrajectoryGenerator`现在开始将只支持使用五阶赫米特曲线进行路径生成。
+- `TimingUtil`的接口改进，`MAX_DECEL`，`DEFAULT_VEL`和`SLOWDOWN_CHUNKS`被取消。
 - `SwerveDriveModule`中引入了`CarpetScrubFactor`，以改善轮氏里程计的精度。
 - `SwerveInverseKinematics`重写，从现在开始将只支持常量数据的运算，并将针对`SwerveDriveModuel`的最大平移速度进行约束。
 
