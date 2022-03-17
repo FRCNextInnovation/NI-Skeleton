@@ -18,7 +18,7 @@ public final class Config {
   public static final double LOOPER_CONTROL_PERIOD_SEC = 0.01;
   public static final int LOOPER_CONTROL_DELTA_TIME_MS =
       Util.roundToInt(LOOPER_CONTROL_PERIOD_SEC * 1000.0);
-  public static final double LOOPER_LOG_PERIOD_SEC = 0.04;
+  public static final double LOOPER_LOG_PERIOD_SEC = 0.10;
 
   // CAN
   public static final int CAN_TIMEOUT_MS = 100;
