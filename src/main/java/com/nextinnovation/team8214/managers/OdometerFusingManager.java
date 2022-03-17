@@ -6,15 +6,15 @@ import com.nextinnovation.lib.geometry.Translation2d;
 import com.nextinnovation.lib.utils.InterpolatingDouble;
 import com.nextinnovation.lib.utils.InterpolatingTreeMap;
 
-public class OdometryFusingManager {
+public class OdometerFusingManager {
   /***********************************************************************************************
    * Singleton *
    ***********************************************************************************************/
-  private static OdometryFusingManager instance = null;
+  private static OdometerFusingManager instance = null;
 
-  public static synchronized OdometryFusingManager getInstance() {
+  public static synchronized OdometerFusingManager getInstance() {
     if (instance == null) {
-      instance = new OdometryFusingManager();
+      instance = new OdometerFusingManager();
     }
     return instance;
   }
@@ -29,7 +29,7 @@ public class OdometryFusingManager {
 
   private InterpolatingTreeMap<InterpolatingDouble, Pose2d> fusedOdometry;
 
-  private OdometryFusingManager() {
+  private OdometerFusingManager() {
     reset(0.0, Pose2d.identity());
   }
 

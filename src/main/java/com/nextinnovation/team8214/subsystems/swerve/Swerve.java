@@ -20,7 +20,7 @@ import com.nextinnovation.team8214.Ports;
 import com.nextinnovation.team8214.devices.ahrs.AhrsNavX;
 import com.nextinnovation.team8214.devices.ahrs.BaseAhrs;
 import com.nextinnovation.team8214.managers.ControlSignalManager;
-import com.nextinnovation.team8214.managers.OdometryFusingManager;
+import com.nextinnovation.team8214.managers.OdometerFusingManager;
 import com.nextinnovation.lib.subsystems.BaseSubsystem;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -179,7 +179,7 @@ public class Swerve extends BaseSubsystem {
   private final SwerveDriveModule rearRightModule;
   private final List<SwerveDriveModule> modules;
   private final List<SwerveDriveModule> odometerModules;
-  private final OdometryFusingManager odometryFusingManager = OdometryFusingManager.getInstance();
+  private final OdometerFusingManager odometerFusingManager = OdometerFusingManager.getInstance();
   private final DriveMotionPlanner driveMotionPlanner =
       new DriveMotionPlanner(
           0.25,
@@ -247,7 +247,7 @@ public class Swerve extends BaseSubsystem {
    ************************************************************************************************/
   public synchronized void resetPose() {
     setPose(startingPose);
-    odometryFusingManager.reset(Timer.getFPGATimestamp(), startingPose);
+    odometerFusingManager.reset(Timer.getFPGATimestamp(), startingPose);
     kinematics.resetTotalDistance();
   }
 
@@ -283,7 +283,7 @@ public class Swerve extends BaseSubsystem {
   }
 
   public Pose2d getPose() {
-    return odometryFusingManager.getLatestFieldCentricRobotPose();
+    return odometerFusingManager.getLatestFieldCentricRobotPose();
   }
 
   public synchronized void setPose(Pose2d pose) {
@@ -435,7 +435,7 @@ public class Swerve extends BaseSubsystem {
       moduleEstimatedRobotPoses.add(module.getEstimatedRobotPose());
     }
     kinematics.update(moduleEstimatedRobotPoses, periodicInput.ahrsHeading, timestamp);
-    odometryFusingManager.addChassisWODeltaTranslationMap(
+    odometerFusingManager.addChassisWODeltaTranslationMap(
         timestamp, kinematics.getDeltaPosition(), periodicInput.ahrsHeading);
     odometerModules.forEach(
         (module) -> module.setModulePositionFromRobotPose(kinematics.getPose()));
