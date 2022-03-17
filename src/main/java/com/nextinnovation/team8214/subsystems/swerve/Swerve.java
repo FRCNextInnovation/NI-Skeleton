@@ -34,7 +34,7 @@ public class Swerve extends BaseSubsystem {
    * Control Loop *
    ***********************************************************************************************/
   @Override
-  public void registerEnabledLoops(ILooper enabledLooper) {
+  public void registerEnabledLoops(ILooper enabled_looper) {
     ILoop loop =
         new ILoop() {
           @Override
@@ -91,7 +91,7 @@ public class Swerve extends BaseSubsystem {
             disable();
           }
         };
-    enabledLooper.register(loop);
+    enabled_looper.register(loop);
   }
 
   /***********************************************************************************************
