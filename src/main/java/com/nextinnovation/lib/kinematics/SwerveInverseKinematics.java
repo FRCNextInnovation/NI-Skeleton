@@ -57,15 +57,16 @@ public class SwerveInverseKinematics {
    * @return Solved drive vector of modules
    */
   public List<Translation2d> calculateNormalizedModuleVelocities(
-      Translation2d translation_vector,
+      final Translation2d translation_vector,
       double rotation_magnitude,
       Rotation2d field_centric_robot_heading) {
-    translation_vector = translation_vector.rotateBy(field_centric_robot_heading.inverse());
+    Translation2d robot_centric_translation_vector =
+        translation_vector.rotateBy(field_centric_robot_heading.inverse());
     List<Translation2d> moduleDriveVectors = new ArrayList<>(moduleCount);
     double maxCalculatedModuleVelocity = 1.0;
     for (Rotation2d rotationVector : moduleRotationVectors) {
       Translation2d driveVector =
-          translation_vector.translateBy(
+          robot_centric_translation_vector.translateBy(
               Translation2d.fromPolar(rotationVector, rotation_magnitude));
       double translationVelocity = driveVector.norm();
 

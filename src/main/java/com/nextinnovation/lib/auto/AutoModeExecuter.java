@@ -17,7 +17,7 @@ public class AutoModeExecuter {
   private BaseAutoMode autoMode;
   private Thread thread = null;
 
-  public void setAutoMode(BaseAutoMode new_auto_mode) {
+  public void setAutoMode(final BaseAutoMode new_auto_mode) {
     autoMode = new_auto_mode;
     thread =
         new Thread(

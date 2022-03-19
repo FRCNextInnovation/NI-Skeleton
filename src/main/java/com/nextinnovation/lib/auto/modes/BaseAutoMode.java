@@ -45,7 +45,7 @@ public abstract class BaseAutoMode {
     return isActive();
   }
 
-  public void runAction(BaseAction action) throws AutoModeEndedException {
+  public void runAction(final BaseAction action) throws AutoModeEndedException {
     isActiveWithThrow();
     long waitTime = (long) (update_rate * 1000.0);
 

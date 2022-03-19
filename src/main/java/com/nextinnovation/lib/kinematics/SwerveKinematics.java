@@ -19,6 +19,30 @@ public class SwerveKinematics {
     this.distanceDevianceThreshold = distanceDevianceThreshold;
   }
 
+  public Pose2d getPose() {
+    return pose;
+  }
+
+  public void setPose(Pose2d pose) {
+    this.pose = pose;
+  }
+
+  public Translation2d getVelocity() {
+    return velocity;
+  }
+
+  public Translation2d getDeltaPosition() {
+    return deltaPosition;
+  }
+
+  public double getTotalDistance() {
+    return totalDistance;
+  }
+
+  public void resetTotalDistance() {
+    totalDistance = 0.0;
+  }
+
   public synchronized void update(
       List<Pose2d> moduleEstimatedRobotPoses, Rotation2d robotHeading, double timestamp) {
     updateKinematicState(estimateRobotPosition(moduleEstimatedRobotPoses), robotHeading, timestamp);
@@ -63,29 +87,5 @@ public class SwerveKinematics {
     pose = new Pose2d(robotPosition, robotHeading);
     velocity = deltaPosition.scale(1.0 / (timestamp - previousUpdateTimestamp));
     totalDistance += deltaPosition.norm();
-  }
-
-  public Pose2d getPose() {
-    return pose;
-  }
-
-  public void setPose(Pose2d pose) {
-    this.pose = pose;
-  }
-
-  public Translation2d getVelocity() {
-    return velocity;
-  }
-
-  public Translation2d getDeltaPosition() {
-    return deltaPosition;
-  }
-
-  public double getTotalDistance() {
-    return totalDistance;
-  }
-
-  public void resetTotalDistance() {
-    totalDistance = 0.0;
   }
 }
