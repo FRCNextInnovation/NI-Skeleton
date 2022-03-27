@@ -145,10 +145,6 @@ public class SwerveDriveModule extends BaseSubsystem {
             SwerveDriveModuleConfig.Translation.OPEN_LOOP_RAMP, Config.CAN_TIMEOUT_MS),
         moduleName + " Translation: Can't set open loop ramp!");
     TalonUtil.checkError(
-        translationMotor.configClosedloopRamp(
-            SwerveDriveModuleConfig.Translation.CLOSED_LOOP_RAMP, Config.CAN_TIMEOUT_MS),
-        moduleName + " Translation: Can't set closed loop ramp!");
-    TalonUtil.checkError(
         translationMotor.configVoltageCompSaturation(10.0, Config.CAN_TIMEOUT_MS),
         moduleName + " Translation: Can't set voltage comp saturation!");
     TalonUtil.checkError(
@@ -202,16 +198,6 @@ public class SwerveDriveModule extends BaseSubsystem {
     TalonUtil.checkError(
         rotationMotor.configVelocityMeasurementWindow(1, Config.CAN_TIMEOUT_MS),
         moduleName + " Rotation: Can't set velocity measurement window!");
-    TalonUtil.checkError(
-        rotationMotor.configMotionAcceleration(
-            Util.roundToInt(SwerveDriveModuleConfig.Rotation.MAX_ACCELERATION),
-            Config.CAN_TIMEOUT_MS),
-        moduleName + " Rotation: Can't set motion acceleration!");
-    TalonUtil.checkError(
-        rotationMotor.configMotionCruiseVelocity(
-            Util.roundToInt(SwerveDriveModuleConfig.Rotation.MAX_CRUISE_SPEED),
-            Config.CAN_TIMEOUT_MS),
-        moduleName + " Rotation: Can't set motion cruise velocity!");
     TalonUtil.checkError(
         rotationMotor.configVoltageCompSaturation(8.0, Config.CAN_TIMEOUT_MS),
         moduleName + " Rotation: Can't set voltage comp saturation!");
@@ -335,7 +321,7 @@ public class SwerveDriveModule extends BaseSubsystem {
   }
 
   public void setRotationHeadingTarget(double heading_degrees) {
-    periodicOutput.rotationMotorControlMode = ControlMode.MotionMagic;
+    periodicOutput.rotationMotorControlMode = ControlMode.Position;
     periodicOutput.rotationMotorSetpoint =
         degreesToRotationEncoderUnits(
             Util.boundAngleToClosestScope(
@@ -348,7 +334,7 @@ public class SwerveDriveModule extends BaseSubsystem {
   }
 
   public boolean isRotationHeadingOnTarget() {
-    if (periodicOutput.rotationMotorControlMode == ControlMode.MotionMagic) {
+    if (periodicOutput.rotationMotorControlMode == ControlMode.Position) {
       return Util.epsilonEquals(
           periodicOutput.rotationMotorSetpoint,
           periodicInput.rotationMotorEncoderPosition,

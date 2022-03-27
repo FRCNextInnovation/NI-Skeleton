@@ -17,8 +17,7 @@ public final class SwerveDriveModuleConfig {
     public static final double SPEED_RESERVE_FACTOR = 1 / 16.0;
     public static final double MAX_CRUISE_SPEED =
         MAX_SPEED * (1.0 - SPEED_RESERVE_FACTOR); // in encoder units / 0.1s
-    public static final double OPEN_LOOP_RAMP = 0.12;
-    public static final double CLOSED_LOOP_RAMP = 0.12;
+    public static final double OPEN_LOOP_RAMP = 0.35;
 
     // Error Tolerance
     public static final double SPEED_ON_TARGET_ERROR_TOLERANCE = 1.0;
@@ -55,12 +54,7 @@ public final class SwerveDriveModuleConfig {
     public static final boolean IS_EXTERNAL_SENSOR_INVERT = true;
 
     // Speed Config
-    public static final double SPEED_RESERVE_FACTOR = 1.0 / 16.0;
     public static final double MAX_SPEED = 14600.0; // in encoder units / 0.1s
-    public static final double MAX_CRUISE_SPEED =
-        MAX_SPEED * (1.0 - SPEED_RESERVE_FACTOR); // in encoder units / 0.1s
-    public static final double MAX_ACCELERATION =
-        MAX_SPEED * 16.0; // estimated, in encoder units / 0.1s^2
 
     // Error Tolerance
     public static final double HEADING_ON_TARGET_ERROR_TOLERANCE = 360.0 / 256.0;
