@@ -39,6 +39,7 @@ public class Vision extends BaseSubsystem {
    ***********************************************************************************************/
   private static class PeriodicInput {
     double latency = 255.0;
+    boolean isUpdated = false;
     boolean hasTarget = false;
     Rotation2d targetX = Rotation2d.identity();
     Rotation2d targetY = Rotation2d.identity();
@@ -47,6 +48,7 @@ public class Vision extends BaseSubsystem {
   @Override
   public void readPeriodicInputs() {
     synchronized (ioLock) {
+      periodicInput.isUpdated = true;
       periodicInput.latency = limelight.getLatency();
       periodicInput.hasTarget = limelight.hasTarget();
       if (periodicInput.hasTarget) {
@@ -124,6 +126,17 @@ public class Vision extends BaseSubsystem {
    ************************************************************************************************/
   public boolean isEnabled() {
     return isEnabled;
+  }
+
+  public boolean isUpdated() {
+    synchronized (ioLock) {
+      if (periodicInput.isUpdated) {
+        periodicInput.isUpdated = false;
+        return true;
+      } else {
+        return false;
+      }
+    }
   }
 
   public boolean hasTarget() {
