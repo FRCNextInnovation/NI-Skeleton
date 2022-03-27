@@ -286,9 +286,8 @@ public class SwerveDriveModule extends BaseSubsystem {
   }
 
   public synchronized void setNormalizedTranslationVelocityTarget(double normalized_velocity) {
-    periodicOutput.translationMotorControlMode = ControlMode.Velocity;
-    periodicOutput.translationMotorSetpoint =
-        SwerveDriveModuleConfig.Translation.MAX_CRUISE_SPEED * normalized_velocity;
+    setTranslationVelocityTarget(
+        SwerveDriveModuleConfig.Translation.MAX_CRUISE_SPEED * normalized_velocity);
   }
 
   public synchronized void setTranslationOpenLoop(double normalized_output) {
