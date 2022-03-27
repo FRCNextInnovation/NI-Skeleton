@@ -30,22 +30,19 @@ public final class SwerveDriveModuleConfig {
     public static final double PID0_KD = 0.01;
     public static final double PID0_KF = 1023.0 / MAX_SPEED;
 
-    // Communication Parameters
-    public static final int STATUS_FRAME_PERIOD = Config.LOOPER_CONTROL_DELTA_TIME_MS;
-
     // Mechanical Config
     public static final double WHEEL_DIAMETER = 4.012;
     public static final int ENCODER_RESOLUTION = 2048;
-    public static final double ENCODER_TO_WHEEL_RATIO =
-        570.0 / 91.0; // the number of rotations the encoder undergoes for every rotation of the
-    // wheel
+    // the number of rotations the encoder undergoes for every rotation of the wheel
+    public static final double ENCODER_TO_WHEEL_RATIO = 570.0 / 91.0; // MK3 8214
+    // public static final double ENCODER_TO_WHEEL_RATIO = 570.0 / 91.0; // MK4 8583
     public static final double ENCODER_UNITS_PER_WHEEL_RESOLUTION =
         ENCODER_RESOLUTION * ENCODER_TO_WHEEL_RATIO;
-    public static final double ODOMETER_ERROR_COMPENSATION_FACTOR = 1.0;
     public static final double ENCODER_UNITS_PER_INCH =
-        ENCODER_UNITS_PER_WHEEL_RESOLUTION
-            / (Math.PI * WHEEL_DIAMETER)
-            * ODOMETER_ERROR_COMPENSATION_FACTOR;
+        ENCODER_UNITS_PER_WHEEL_RESOLUTION / (Math.PI * WHEEL_DIAMETER);
+
+    // Communication Parameters
+    public static final int STATUS_FRAME_PERIOD = Config.LOOPER_CONTROL_DELTA_TIME_MS;
   }
 
   public static final class Rotation {
@@ -69,9 +66,9 @@ public final class SwerveDriveModuleConfig {
     // Mechanical Config
     public static final int ENCODER_RESOLUTION = 2048;
     public static final int CALIBRATION_ENCODER_RESOLUTION = 4096;
-    public static final double ENCODER_TO_MODULE_BASE_RATIO =
-        12.0; // the number of rotations the encoder undergoes for every rotation of the base of
-    // the module
+    // the number of rotations the encoder undergoes for every rotation of the base of the module
+    public static final double ENCODER_TO_MODULE_BASE_RATIO = 12.0; // MK3 8214
+    // public static final double ENCODER_TO_MODULE_BASE_RATIO = 12.0; //MK4 8583
     public static final double ENCODER_TO_EXTERNAL_ENCODER_RATIO =
         (double) (CALIBRATION_ENCODER_RESOLUTION)
             / ENCODER_RESOLUTION
