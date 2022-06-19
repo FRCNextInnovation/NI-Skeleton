@@ -27,10 +27,10 @@ public final class SwerveConfig {
           FRONT_RIGHT_MODULE_POSITION_RELATIVE_TO_DRIVE_CENTER);
 
   // Calibration Offsets (calibration encoder values when the wheels are facing 0 degrees)
-  public static final int FRONT_LEFT_CALIBRATION_OFFSET = 2460;
-  public static final int REAR_LEFT_CALIBRATION_OFFSET = 5520;
-  public static final int REAR_RIGHT_CALIBRATION_OFFSET = 12720;
-  public static final int FRONT_RIGHT_CALIBRATION_OFFSET = 12528;
+  public static final int FRONT_LEFT_CALIBRATION_OFFSET = 0;
+  public static final int REAR_LEFT_CALIBRATION_OFFSET = 0;
+  public static final int REAR_RIGHT_CALIBRATION_OFFSET = 0;
+  public static final int FRONT_RIGHT_CALIBRATION_OFFSET = 0;
 
   // Odometer
   public static final double WHEEL_ODOMETER_MAX_DELTA_INCH = 2.2;

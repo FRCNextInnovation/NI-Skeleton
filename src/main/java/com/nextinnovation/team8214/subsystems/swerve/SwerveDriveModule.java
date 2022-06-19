@@ -17,6 +17,7 @@ import com.nextinnovation.lib.utils.Util;
 import com.nextinnovation.team8214.Config;
 import com.nextinnovation.lib.subsystems.BaseSubsystem;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class SwerveDriveModule extends BaseSubsystem {
   /************************************************************************************************
@@ -464,7 +465,10 @@ public class SwerveDriveModule extends BaseSubsystem {
    * Log & self-test *
    ************************************************************************************************/
   @Override
-  public void logToSmartDashboard() {}
+  public void logToSmartDashboard() {
+    SmartDashboard.putNumber(
+        moduleName + "rotation position offset", periodicInput.rotationMotorEncoderPosition);
+  }
 
   private boolean testTranslationMotorCalibration() {
     return translationMotor.getInverted() == SwerveDriveModuleConfig.Translation.IS_INVERT
