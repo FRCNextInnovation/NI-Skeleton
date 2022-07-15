@@ -58,19 +58,20 @@ public final class SwerveDriveModuleConfig {
 
     // PID Parameters
     // Slot 0 is for teleop
-    public static final double PID0_KP = 2.0;
+    public static final double PID0_KP = 1.6;
     public static final double PID0_KI = 0.0;
-    public static final double PID0_KD = 24.0;
+    public static final double PID0_KD = 20.0;
     public static final double PID0_KF = 1023.0 / MAX_SPEED;
 
     // Mechanical Config
     public static final int ENCODER_RESOLUTION = 2048;
-    public static final int CALIBRATION_ENCODER_RESOLUTION = 4096;
+    public static final double CALIBRATION_ENCODER_RESOLUTION =
+        360.0; // 360 for CANCoder, 4096 for SRX
     // the number of rotations the encoder undergoes for every rotation of the base of the module
     public static final double ENCODER_TO_MODULE_BASE_RATIO = 12.0; // MK3 8214
     // public static final double ENCODER_TO_MODULE_BASE_RATIO = 3000.0 / 140.0; // MK4i 8583
     public static final double ENCODER_TO_EXTERNAL_ENCODER_RATIO =
-        (double) (CALIBRATION_ENCODER_RESOLUTION)
+        CALIBRATION_ENCODER_RESOLUTION
             / ENCODER_RESOLUTION
             / ENCODER_TO_MODULE_BASE_RATIO; // the number of encoder units the encoder undergoes
     // for every encoder unit the calibration encoder

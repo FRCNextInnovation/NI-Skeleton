@@ -1,7 +1,6 @@
 package com.nextinnovation.team8214;
 
 import com.nextinnovation.lib.auto.AutoModeExecuter;
-import com.nextinnovation.lib.loops.ILoop;
 import com.nextinnovation.lib.loops.Looper;
 import com.nextinnovation.lib.subsystems.SubsystemGroup;
 import com.nextinnovation.lib.utils.CrashTracker;
@@ -20,7 +19,6 @@ import java.util.Arrays;
 
 public class Robot extends TimedRobot {
   private final Looper controlLooper = new Looper("Control", Config.LOOPER_CONTROL_PERIOD_SEC);
-  private final Looper logLooper = new Looper("Log", Config.LOOPER_LOG_PERIOD_SEC);
 
   private TrajectorySet trajectorySet;
   private AutoModeExecuter autoModeExecuter;
@@ -71,22 +69,6 @@ public class Robot extends TimedRobot {
       initSubsystems();
       initAutoTools();
 
-      logLooper.register(
-          new ILoop() {
-            @Override
-            public void onStart(double timestamp) {}
-
-            @Override
-            public void onLoop(double timestamp) {
-              autoModeChooser.logToSmartDashboard();
-              subsystems.logToSmartDashboard();
-              controlLooper.logToSmartDashboard();
-              logLooper.logToSmartDashboard();
-            }
-
-            @Override
-            public void onStop(double timestamp) {}
-          });
     } catch (Throwable t) {
       CrashTracker.logThrowableCrash(t);
       throw t;
@@ -101,14 +83,17 @@ public class Robot extends TimedRobot {
    * SmartDashboard integrated updating.
    */
   @Override
-  public void robotPeriodic() {}
+  public void robotPeriodic() {
+    autoModeChooser.logToSmartDashboard();
+    controlLooper.logToSmartDashboard();
+    subsystems.logToSmartDashboard();
+  }
 
   /** This function is called once when autonomous is enabled. */
   @Override
   public void autonomousInit() {
     try {
       controlLooper.start();
-      logLooper.start();
 
       autoModeExecuter.setAutoMode(autoModeChooser.getSelectedAutoMode());
       autoModeExecuter.start();
@@ -131,7 +116,6 @@ public class Robot extends TimedRobot {
       }
 
       controlLooper.restart();
-      logLooper.restart();
     } catch (Throwable t) {
       CrashTracker.logThrowableCrash(t);
       throw t;

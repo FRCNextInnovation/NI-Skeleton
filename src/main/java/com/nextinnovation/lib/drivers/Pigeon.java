@@ -26,7 +26,7 @@ public class Pigeon {
   }
 
   public double getFusedYaw() {
-    return pigeon.getFusedHeading();
+    return -pigeon.getFusedHeading();
   }
 
   public double getPitch() {

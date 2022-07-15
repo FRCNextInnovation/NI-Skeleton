@@ -13,11 +13,10 @@ import com.nextinnovation.lib.drivers.TalonUtil;
 import com.nextinnovation.lib.geometry.Pose2d;
 import com.nextinnovation.lib.geometry.Rotation2d;
 import com.nextinnovation.lib.geometry.Translation2d;
+import com.nextinnovation.lib.subsystems.BaseSubsystem;
 import com.nextinnovation.lib.utils.Util;
 import com.nextinnovation.team8214.Config;
-import com.nextinnovation.lib.subsystems.BaseSubsystem;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class SwerveDriveModule extends BaseSubsystem {
   /************************************************************************************************
@@ -466,8 +465,8 @@ public class SwerveDriveModule extends BaseSubsystem {
    ************************************************************************************************/
   @Override
   public void logToSmartDashboard() {
-    SmartDashboard.putNumber(
-        moduleName + "rotation position offset", periodicInput.rotationMotorEncoderPosition);
+    // SmartDashboard.putNumber(
+    //    moduleName + "rotation calibration position offset", getRotationEncoderCalibrationTarget());
   }
 
   private boolean testTranslationMotorCalibration() {

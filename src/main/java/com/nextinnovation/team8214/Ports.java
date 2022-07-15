@@ -4,7 +4,6 @@ package com.nextinnovation.team8214;
 public final class Ports {
   /** Inner class to store IDs of CAN devices. */
   public static final class Can {
-    public static final int PCM = 0;
     public static final int PIGEON_CHASSIS = 0;
 
     // Swerve Drive

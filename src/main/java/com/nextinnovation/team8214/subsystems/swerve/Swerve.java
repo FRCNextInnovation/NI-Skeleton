@@ -10,6 +10,7 @@ import com.nextinnovation.lib.kinematics.SwerveKinematics;
 import com.nextinnovation.lib.loops.ILoop;
 import com.nextinnovation.lib.loops.ILooper;
 import com.nextinnovation.lib.planners.DriveMotionPlanner;
+import com.nextinnovation.lib.subsystems.BaseSubsystem;
 import com.nextinnovation.lib.trajectory.TimedView;
 import com.nextinnovation.lib.trajectory.Trajectory;
 import com.nextinnovation.lib.trajectory.TrajectoryIterator;
@@ -17,11 +18,10 @@ import com.nextinnovation.lib.trajectory.timing.TimedState;
 import com.nextinnovation.lib.utils.Util;
 import com.nextinnovation.team8214.Config;
 import com.nextinnovation.team8214.Ports;
-import com.nextinnovation.team8214.devices.ahrs.AhrsNavX;
+import com.nextinnovation.team8214.devices.ahrs.AhrsPigeon;
 import com.nextinnovation.team8214.devices.ahrs.BaseAhrs;
 import com.nextinnovation.team8214.managers.ControlSignalManager;
 import com.nextinnovation.team8214.managers.OdometerFusingManager;
-import com.nextinnovation.lib.subsystems.BaseSubsystem;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -187,8 +187,8 @@ public class Swerve extends BaseSubsystem {
           SwerveConfig.MAX_SPEED_INCHES_PER_SECOND,
           0.3,
           DriveMotionPlanner.FollowerType.ADAPTIVE_PURE_PURSUIT);
-  //  private final BaseAhrs ahrs = AhrsPigeon.getInstance();
-  private final BaseAhrs ahrs = AhrsNavX.getInstance();
+  private final BaseAhrs ahrs = AhrsPigeon.getInstance();
+  //  private final BaseAhrs ahrs = AhrsNavX.getInstance();
 
   private Swerve() {
     frontLeftModule =
@@ -233,8 +233,8 @@ public class Swerve extends BaseSubsystem {
   }
 
   private synchronized void configModules() {
-    frontRightModule.enableTranslationInverted(true);
-    rearRightModule.enableTranslationInverted(true);
+    frontRightModule.enableTranslationInverted(false);
+    rearRightModule.enableTranslationInverted(false);
   }
 
   public synchronized void configHeadingController(
