@@ -16,8 +16,7 @@ public class AhrsPigeon extends BaseAhrs {
     return instance;
   }
 
-  private static final Pigeon pigeon =
-      new Pigeon(Ports.Can.PIGEON_CHASSIS, Config.CAN_TIMEOUT_MS);
+  private static final Pigeon pigeon = new Pigeon(Ports.Can.PIGEON_CHASSIS, Config.CAN_TIMEOUT_MS);
   private static Rotation2d referenceHeading = Rotation2d.identity();
 
   private AhrsPigeon() {
