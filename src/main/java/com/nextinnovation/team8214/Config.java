@@ -12,7 +12,7 @@ public final class Config {
   public static final double INTAKE_PUSH_OUT_LENGTH = 4.0;
 
   // AHRS
-  public static final double INIT_HEADING = 180.0;
+  public static final double INIT_HEADING = 0.0;
 
   // Lopper
   public static final double LOOPER_CONTROL_PERIOD_SEC = 0.01;

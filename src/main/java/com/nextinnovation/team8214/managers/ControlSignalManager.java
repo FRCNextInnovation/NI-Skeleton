@@ -57,7 +57,7 @@ public class ControlSignalManager {
   }
 
   public double getSwerveManualRotationMagnitude() {
-    double input = Util.applyRemappedDeadband(driverController.getLeftX(), 0.09375) * 0.5;
+    double input = Util.applyRemappedDeadband(-driverController.getLeftX(), 0.09375) * 0.5;
 
     if (driverController.getButton(StatefulXboxController.ButtonId.TRIGGER_LEFT).isBeingPressed()) {
       input *= (0.5);

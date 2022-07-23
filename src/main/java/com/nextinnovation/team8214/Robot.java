@@ -84,7 +84,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
-    autoModeChooser.logToSmartDashboard();
+//    autoModeChooser.logToSmartDashboard();
     controlLooper.logToSmartDashboard();
     subsystems.logToSmartDashboard();
   }

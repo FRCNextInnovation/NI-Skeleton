@@ -2,6 +2,7 @@ package com.nextinnovation.lib.kinematics;
 
 import com.nextinnovation.lib.geometry.Rotation2d;
 import com.nextinnovation.lib.geometry.Translation2d;
+import com.nextinnovation.lib.utils.Util;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +40,7 @@ public class SwerveInverseKinematics {
     }
     moduleRotationVectors = new ArrayList<>(moduleCount);
     for (Translation2d position : modulePositionsRelativeToRotationCenter) {
-      moduleRotationVectors.add(position.rotateBy(Rotation2d.fromDegrees(90.0)).direction());
+      moduleRotationVectors.add(position.direction().normal());
     }
   }
 
@@ -77,13 +78,9 @@ public class SwerveInverseKinematics {
       moduleDriveVectors.add(driveVector);
     }
 
-    double velocityConstraintScalar = 1.0 / maxCalculatedModuleVelocity;
-    for (int i = 0; i < moduleDriveVectors.size(); i++) {
-      Translation2d driveVector = moduleDriveVectors.get(i);
-      moduleDriveVectors.set(
-          i,
-          Translation2d.fromPolar(
-              driveVector.direction(), driveVector.norm() * velocityConstraintScalar));
+    if (maxCalculatedModuleVelocity - 1.0 > Util.EPSILON_VALUE) {
+      double velocityConstraintScalar = 1.0 / maxCalculatedModuleVelocity;
+      moduleDriveVectors.replaceAll(vector -> vector.scale(velocityConstraintScalar));
     }
 
     return moduleDriveVectors;

@@ -98,7 +98,7 @@ public class SwerveDriveModule extends BaseSubsystem {
     externalRotationEncoder = new CANCoder(external_rotation_encoder_id);
     rotationCalibrationOffset = rotation_calibration_offset;
     modulePositionToTranslationCenter = module_position_to_robot_centric;
-    configExternalRotationSensor();
+    // configExternalRotationSensor();
     configTranslationMotor();
     configRotationMotor();
     calibrateRotationEncoder();
@@ -468,6 +468,8 @@ public class SwerveDriveModule extends BaseSubsystem {
   public void logToSmartDashboard() {
     SmartDashboard.putNumber(
         moduleName + "rotation calibration position offset", getRotationEncoderCalibrationTarget());
+    SmartDashboard.putNumber(
+        moduleName + "translation speed", periodicInput.translationMotorEncoderVelocity);
   }
 
   private boolean testTranslationMotorCalibration() {

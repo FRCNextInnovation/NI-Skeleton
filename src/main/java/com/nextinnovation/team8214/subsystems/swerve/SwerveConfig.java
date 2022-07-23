@@ -27,7 +27,8 @@ public final class SwerveConfig {
           FRONT_RIGHT_MODULE_POSITION_RELATIVE_TO_DRIVE_CENTER);
 
   // Calibration Offsets (calibration encoder values when the wheels are facing 0 degrees)
-  // 2022 8214: 10786 17135 4915 1570
+  // 2022 8214: 10786 17203 5120 1502
+  // 2022 8583: 14263 2682 25722 36084
   public static final int FRONT_LEFT_CALIBRATION_OFFSET = 0;
   public static final int REAR_LEFT_CALIBRATION_OFFSET = 0;
   public static final int REAR_RIGHT_CALIBRATION_OFFSET = 0;
@@ -44,7 +45,7 @@ public final class SwerveConfig {
       public static double KP = 0.375;
       public static double KI = 0.0;
       public static double KD = 0.01;
-      public static double ERROR_TOLERANCE = 1.0 / 3.0;
+      public static double ERROR_TOLERANCE = 1.0 / 9.0;
     }
 
     public static final class Auto {
