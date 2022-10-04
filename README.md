@@ -1,7 +1,7 @@
-# NI-Code-Template-Ultimate
+# NI-Skeleton
 [![Next-Innovation](https://img.shields.io/badge/Next-Innovation-blueviolet?style=flat)](https://github.com/FRCNextInnovation) [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat)](https://github.com/RichardLitt/standard-readme) [![Lang](https://img.shields.io/badge/Lang-zh--CN-Green?style=flat)]()
 
-NI-Code-Template-Ultimate是 NI 电控组在旧代码模板的基础上，为团队 8214 与 8583 的代码开发而特别整理的代码模板。此模板由 Java 开发并基于 [WPILib's Java Control System](https://docs.wpilib.org/)
+NI-Skeleton 是 NI 电控组在旧代码模板的基础上，为团队 8214 与 8583 的代码开发而特别整理的代码模板。此模板由 Java 开发并基于 [WPILib's Java Control System](https://docs.wpilib.org/)
 
 本 Readme 包含NI代码模板的主要设计思路，以及各个 Package 与重点 Class 的相关介绍。
 
