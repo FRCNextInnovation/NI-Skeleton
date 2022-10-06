@@ -9,22 +9,27 @@ import com.nextinnovation.lib.wpilib.TimedRobot;
 import com.nextinnovation.team8214.auto.AutoModeChooser;
 import com.nextinnovation.team8214.auto.TrajectorySet;
 import com.nextinnovation.team8214.devices.PneumaticCompressor;
-import com.nextinnovation.team8214.devices.ahrs.AhrsPigeon;
+import com.nextinnovation.team8214.devices.VideoFeeder;
+import com.nextinnovation.team8214.devices.ahrs.AhrsPigeon2;
 import com.nextinnovation.team8214.managers.ControlSignalManager;
-import com.nextinnovation.team8214.subsystems.vision.Vision;
+import com.nextinnovation.team8214.managers.OdometerFusingManager;
 import com.nextinnovation.team8214.subsystems.swerve.Swerve;
+import com.nextinnovation.team8214.subsystems.vision.Vision;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 
 import java.util.Arrays;
 
 public class Robot extends TimedRobot {
   private final Looper controlLooper = new Looper("Control", Config.LOOPER_CONTROL_PERIOD_SEC);
+  private final Looper visionLooper = new Looper("Vision", Config.LOOPER_VISION_PERIOD_SEC);
 
   private TrajectorySet trajectorySet;
   private AutoModeExecuter autoModeExecuter;
   private AutoModeChooser autoModeChooser;
 
   private ControlSignalManager controlSignalManager;
+  private OdometerFusingManager odometerFusingManager;
+  private PneumaticCompressor pneumaticCompressor;
 
   private Vision vision;
   private Swerve swerve;
@@ -32,20 +37,27 @@ public class Robot extends TimedRobot {
 
   private void initManagers() {
     controlSignalManager = ControlSignalManager.getInstance();
+    odometerFusingManager = OdometerFusingManager.getInstance();
+
+    controlSignalManager.registerEnabledLoops(controlLooper);
   }
 
   private void initDevices() {
-    AhrsPigeon.getInstance();
-    PneumaticCompressor.getInstance().enable();
-    // VideoFeeder.getInstance().enable();
+    AhrsPigeon2.getInstance();
+    pneumaticCompressor = PneumaticCompressor.getInstance();
+    pneumaticCompressor.enable();
+    VideoFeeder.getInstance().enable();
   }
 
   private void initSubsystems() {
     vision = Vision.getInstance();
+
     swerve = Swerve.getInstance();
 
-    subsystems = new SubsystemGroup(Arrays.asList(vision, swerve));
+    subsystems = new SubsystemGroup(Arrays.asList(swerve));
     subsystems.registerEnabledLoops(controlLooper);
+
+    vision.registerEnabledLoops(visionLooper);
   }
 
   private void initAutoTools() {
@@ -64,10 +76,10 @@ public class Robot extends TimedRobot {
     LiveWindow.disableAllTelemetry();
 
     try {
+      initAutoTools();
       initManagers();
       initDevices();
       initSubsystems();
-      initAutoTools();
 
     } catch (Throwable t) {
       CrashTracker.logThrowableCrash(t);
@@ -83,16 +95,13 @@ public class Robot extends TimedRobot {
    * SmartDashboard integrated updating.
    */
   @Override
-  public void robotPeriodic() {
-//    autoModeChooser.logToSmartDashboard();
-    controlLooper.logToSmartDashboard();
-    subsystems.logToSmartDashboard();
-  }
+  public void robotPeriodic() {}
 
   /** This function is called once when autonomous is enabled. */
   @Override
   public void autonomousInit() {
     try {
+      visionLooper.start();
       controlLooper.start();
 
       autoModeExecuter.setAutoMode(autoModeChooser.getSelectedAutoMode());
@@ -105,7 +114,9 @@ public class Robot extends TimedRobot {
 
   /** This function is called periodically during autonomous. */
   @Override
-  public void autonomousPeriodic() {}
+  public void autonomousPeriodic() {
+    teleopPeriodic();
+  }
 
   /** This function is called once when teleop is enabled. */
   @Override
@@ -114,7 +125,7 @@ public class Robot extends TimedRobot {
       if (autoModeExecuter != null) {
         autoModeExecuter.stop();
       }
-
+      visionLooper.restart();
       controlLooper.restart();
     } catch (Throwable t) {
       CrashTracker.logThrowableCrash(t);
@@ -126,7 +137,8 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     try {
-      controlSignalManager.update();
+      pneumaticCompressor.update();
+      logToSmartDashboard();
     } catch (Throwable t) {
       CrashTracker.logThrowableCrash(t);
       throw t;
@@ -137,6 +149,7 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     try {
+      visionLooper.stop();
       controlLooper.stop();
     } catch (Throwable t) {
       CrashTracker.logThrowableCrash(t);
@@ -156,9 +169,30 @@ public class Robot extends TimedRobot {
 
   /** This function is called once when test mode is enabled. */
   @Override
-  public void testInit() {}
+  public void testInit() {
+    try {
+      if (autoModeExecuter != null) {
+        autoModeExecuter.stop();
+      }
+      visionLooper.restart();
+      controlLooper.restart();
+    } catch (Throwable t) {
+      CrashTracker.logThrowableCrash(t);
+      throw t;
+    }
+  }
 
   /** This function is called periodically during test mode. */
   @Override
-  public void testPeriodic() {}
+  public void testPeriodic() {
+    teleopPeriodic();
+  }
+
+  private void logToSmartDashboard() {
+    autoModeChooser.logToSmartDashboard();
+    subsystems.logToSmartDashboard();
+    controlLooper.logToSmartDashboard();
+    controlSignalManager.logToSmartDashBoard();
+    vision.logToSmartDashboard();
+  }
 }

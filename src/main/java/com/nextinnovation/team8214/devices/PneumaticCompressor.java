@@ -30,4 +30,6 @@ public class PneumaticCompressor {
   public boolean pressureOnTarget() {
     return compressor.getPressureSwitchValue();
   }
+
+  public void update() {}
 }

@@ -2,19 +2,31 @@ package com.nextinnovation.team8214.auto.actions;
 
 import com.nextinnovation.lib.auto.actions.BaseAction;
 import com.nextinnovation.lib.geometry.Pose2dWithCurvature;
+import com.nextinnovation.lib.geometry.Translation2d;
 import com.nextinnovation.lib.trajectory.Trajectory;
 import com.nextinnovation.lib.trajectory.timing.TimedState;
+import com.nextinnovation.lib.utils.Util;
 import com.nextinnovation.team8214.subsystems.swerve.Swerve;
+import com.nextinnovation.team8214.subsystems.swerve.SwerveState;
 
 public class SetTrajectoryAction extends BaseAction {
   private final Trajectory<TimedState<Pose2dWithCurvature>> trajectory;
   private final double goalHeading;
+  private final boolean isLastTrajectory;
   private final Swerve swerve;
 
   public SetTrajectoryAction(
-      Trajectory<TimedState<Pose2dWithCurvature>> trajectory, double goalHeading) {
+      Trajectory<TimedState<Pose2dWithCurvature>> trajectory, double goal_heading) {
+    this(trajectory, goal_heading, false);
+  }
+
+  public SetTrajectoryAction(
+      Trajectory<TimedState<Pose2dWithCurvature>> trajectory,
+      double goal_heading,
+      boolean is_last_trajectory) {
     this.trajectory = trajectory;
-    this.goalHeading = goalHeading;
+    goalHeading = goal_heading;
+    isLastTrajectory = is_last_trajectory;
     swerve = Swerve.getInstance();
   }
 
@@ -32,8 +44,21 @@ public class SetTrajectoryAction extends BaseAction {
 
   @Override
   public boolean isFinished() {
-    if (swerve.isDoneWithTrajectory()) {
+    if (isLastTrajectory) {
+      Translation2d currentTranslation = swerve.getPose().getTranslation();
+      Translation2d lastTargetTranslation =
+          trajectory.getLastState().state().getPose().getTranslation();
+
+      if (Util.epsilonEquals(currentTranslation.x(), lastTargetTranslation.x(), 40.0)
+          && Util.epsilonEquals(currentTranslation.y(), lastTargetTranslation.y(), 30.0)) {
+        swerve.setState(SwerveState.DISABLE);
+        return true;
+      } else {
+        return false;
+      }
+    } else if (swerve.isDoneWithTrajectory()) {
       System.out.println("Trajectory finished!");
+      swerve.disableModules();
       return true;
     } else {
       return false;

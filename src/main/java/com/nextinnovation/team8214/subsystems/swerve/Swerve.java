@@ -1,6 +1,7 @@
 package com.nextinnovation.team8214.subsystems.swerve;
 
 import com.nextinnovation.lib.controllers.HeadingController;
+import com.nextinnovation.lib.controllers.TranslationAxisController;
 import com.nextinnovation.lib.geometry.Pose2d;
 import com.nextinnovation.lib.geometry.Pose2dWithCurvature;
 import com.nextinnovation.lib.geometry.Rotation2d;
@@ -18,12 +19,14 @@ import com.nextinnovation.lib.trajectory.timing.TimedState;
 import com.nextinnovation.lib.utils.Util;
 import com.nextinnovation.team8214.Config;
 import com.nextinnovation.team8214.Ports;
-import com.nextinnovation.team8214.devices.ahrs.AhrsPigeon;
+import com.nextinnovation.team8214.devices.ahrs.AhrsPigeon2;
 import com.nextinnovation.team8214.devices.ahrs.BaseAhrs;
 import com.nextinnovation.team8214.managers.ControlSignalManager;
 import com.nextinnovation.team8214.managers.OdometerFusingManager;
+import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,45 +47,48 @@ public class Swerve extends BaseSubsystem {
 
           @Override
           public void onLoop(double timestamp) {
-            synchronized (stateLock) {
-              updateOdometer(timestamp);
+            updateOdometer(timestamp);
 
-              switch (swerveState) {
-                case MANUAL:
-                  Translation2d translationalInput =
-                      ControlSignalManager.getInstance().getSwerveManualTranslation();
-                  double rotationalInput =
-                      ControlSignalManager.getInstance().getSwerveManualRotationMagnitude();
-                  if (Util.epsilonEquals(rotationalInput, 0.0)) {
-                    if (!isHeadingControllerEnabled()
-                        && Math.abs(getAngularVelocity().getUnboundedDegrees()) <= 5.625) {
-                      setTargetHeadingToCurrentHeading();
-                      enableHeadingController();
-                    }
-                  } else {
-                    disableHeadingController();
+            switch (swerveState) {
+              case MANUAL:
+                Translation2d translationalInput =
+                    ControlSignalManager.getInstance().getSwerveManualTranslation();
+                double rotationalInput =
+                    ControlSignalManager.getInstance().getSwerveManualRotationMagnitude();
+
+                if (Util.epsilonEquals(rotationalInput, 0.0)) {
+                  if (!isHeadingControllerEnabled()
+                      && Math.abs(getAngularVelocity().getUnboundedDegrees()) <= 5.625) {
+                    setTargetHeadingToCurrentHeading();
+                    enableHeadingController();
                   }
+                } else {
+                  disableHeadingController();
+                }
+                updateNormalizedVectorialVelocityControl(
+                    translationalInput, rotationalInput, false, timestamp);
+                break;
+
+              case TRAJECTORY:
+                if (!driveMotionPlanner.isDone() || !thetaPIDController.onTarget()) {
+                  Translation2d translationalTrajectoryInput = driveMotionPlanner.update(getPose());
+
+                  double rotationTrajectoryInput =
+                      thetaPIDController.calculate(
+                          Util.boundAngleTo0To360Degrees(getFieldCentricHeading().getDegrees()),
+                          timestamp);
+
                   updateNormalizedVectorialVelocityControl(
-                      translationalInput, rotationalInput, false, timestamp);
-                  break;
-
-                case TRAJECTORY:
-                  if (!driveMotionPlanner.isDone()) {
-                    Translation2d driveVector = driveMotionPlanner.update(getPose());
-                    double maxRotationMagnitude =
-                        driveMotionPlanner.getNormalizedMaxRotationSpeed();
-
-                    updateNormalizedTranslationVelocityControl(
-                        driveVector, maxRotationMagnitude, true, timestamp);
-                  } else {
-                    return;
-                  }
-                  break;
-
-                case DISABLE:
+                      translationalTrajectoryInput, rotationTrajectoryInput, false, timestamp);
+                } else {
                   disableModules();
-                  break;
-              }
+                  return;
+                }
+                break;
+
+              case DISABLE:
+                disable();
+                break;
             }
           }
 
@@ -103,14 +109,14 @@ public class Swerve extends BaseSubsystem {
   }
 
   @Override
-  public synchronized void readPeriodicInputs() {
+  public void readPeriodicInputs() {
     periodicInput.ahrsHeading = ahrs.getRobotHeading();
     periodicInput.ahrsAngularVelocity = ahrs.getRobotAngularVelocity();
     modules.forEach(SwerveDriveModule::readPeriodicInputs);
   }
 
   @Override
-  public synchronized void writePeriodicOutputs() {
+  public void writePeriodicOutputs() {
     modules.forEach(SwerveDriveModule::writePeriodicOutputs);
   }
 
@@ -119,33 +125,24 @@ public class Swerve extends BaseSubsystem {
    ***********************************************************************************************/
   private SwerveState swerveState;
 
-  private final Object stateLock = new Object();
-
   public synchronized void setState(SwerveState new_state) {
-    synchronized (stateLock) {
-      swerveState = new_state;
+    swerveState = new_state;
 
-      switch (swerveState) {
-        case MANUAL:
-          configHeadingController(
-              SwerveConfig.HeadingController.Manual.KP,
-              SwerveConfig.HeadingController.Manual.KI,
-              SwerveConfig.HeadingController.Manual.KD,
-              SwerveConfig.HeadingController.Manual.ERROR_TOLERANCE);
-          break;
-        case DISABLE:
-          disableHeadingController();
-          disableModules();
-          break;
-        case TRAJECTORY:
-          configHeadingController(
-              SwerveConfig.HeadingController.Auto.KP,
-              SwerveConfig.HeadingController.Auto.KI,
-              SwerveConfig.HeadingController.Auto.KD,
-              SwerveConfig.HeadingController.Auto.ERROR_TOLERANCE);
-          enableHeadingController();
-          break;
-      }
+    switch (swerveState) {
+      case MANUAL:
+        configHeadingController(0.375, 0.0, 0.01, 1.0 / 9.0);
+        thetaPIDController.disable();
+        break;
+      case DISABLE:
+        disableHeadingController();
+        thetaPIDController.disable();
+        disableModules();
+        break;
+      case TRAJECTORY:
+        configHeadingController(0.3, 0.0, 0.1, 5.0);
+        enableHeadingController();
+        thetaPIDController.enable();
+        break;
     }
   }
 
@@ -173,6 +170,8 @@ public class Swerve extends BaseSubsystem {
   private final SwerveKinematics kinematics =
       new SwerveKinematics(SwerveConfig.WHEEL_ODOMETER_MAX_DELTA_INCH);
   private final HeadingController headingController = new HeadingController();
+  private final TranslationAxisController thetaPIDController =
+      new TranslationAxisController(0.0017, 0.0, 0.006, 3.0);
   private final SwerveDriveModule frontRightModule;
   private final SwerveDriveModule frontLeftModule;
   private final SwerveDriveModule rearLeftModule;
@@ -180,14 +179,16 @@ public class Swerve extends BaseSubsystem {
   private final List<SwerveDriveModule> modules;
   private final List<SwerveDriveModule> odometerModules;
   private final OdometerFusingManager odometerFusingManager = OdometerFusingManager.getInstance();
-  private final DriveMotionPlanner driveMotionPlanner =
+  private DriveMotionPlanner driveMotionPlanner =
       new DriveMotionPlanner(
           0.25,
           6.0,
           SwerveConfig.MAX_SPEED_INCHES_PER_SECOND,
           0.3,
           DriveMotionPlanner.FollowerType.ADAPTIVE_PURE_PURSUIT);
-  private final BaseAhrs ahrs = AhrsPigeon.getInstance();
+
+  //  private final BaseAhrs ahrs = AhrsPigeon.getInstance();
+  private final BaseAhrs ahrs = AhrsPigeon2.getInstance();
   //  private final BaseAhrs ahrs = AhrsNavX.getInstance();
 
   private Swerve() {
@@ -227,6 +228,7 @@ public class Swerve extends BaseSubsystem {
     modules = Arrays.asList(frontLeftModule, rearLeftModule, rearRightModule, frontRightModule);
     odometerModules = modules;
 
+    configSmartDashboard();
     configModules();
     resetSensors();
     setState(SwerveState.DISABLE);
@@ -295,10 +297,6 @@ public class Swerve extends BaseSubsystem {
     startingPose = pose;
   }
 
-  public double getTotalDistance() {
-    return kinematics.getTotalDistance();
-  }
-
   public Translation2d getVelocity() {
     return kinematics.getVelocity();
   }
@@ -314,6 +312,7 @@ public class Swerve extends BaseSubsystem {
   public synchronized void setTargetHeading(double target_absolute_heading_degrees) {
     headingController.setTargetHeading(
         new Rotation2d(Util.boundAngleTo0To360Degrees(target_absolute_heading_degrees)));
+    thetaPIDController.setTarget(Util.boundAngleTo0To360Degrees(target_absolute_heading_degrees));
   }
 
   public synchronized void setTargetHeadingToCurrentHeading() {
@@ -359,10 +358,17 @@ public class Swerve extends BaseSubsystem {
     }
   }
 
-  public synchronized void setTrajectory(
+  public void setTrajectory(
       Trajectory<TimedState<Pose2dWithCurvature>> trajectory,
       Translation2d following_center,
       double target_heading) {
+    driveMotionPlanner =
+        new DriveMotionPlanner(
+            0.25,
+            6.0,
+            SwerveConfig.MAX_SPEED_INCHES_PER_SECOND,
+            0.3,
+            DriveMotionPlanner.FollowerType.ADAPTIVE_PURE_PURSUIT);
     setState(SwerveState.TRAJECTORY);
     setTargetHeading(target_heading);
     driveMotionPlanner.reset();
@@ -390,15 +396,6 @@ public class Swerve extends BaseSubsystem {
 
   public boolean isHeadingControllerEnabled() {
     return headingController.isEnabled();
-  }
-
-  public boolean isModuleVelocitiesOnTarget() {
-    for (SwerveDriveModule module : modules) {
-      if (!module.isTranslationVelocityOnTarget()) {
-        return false;
-      }
-    }
-    return true;
   }
 
   private synchronized void setModuleHeadingTargets(List<Rotation2d> module_rotation_headings) {
@@ -461,31 +458,6 @@ public class Swerve extends BaseSubsystem {
             getFieldCentricHeading()),
         enable_closed_loop_Control);
   }
-
-  /**
-   * Update set normalized translation velocity swerve, rotation velocity are only gave by heading
-   * controller, usually used in trajectory mode.
-   *
-   * @param translation_vector Normalized translation vector in [-1.0, 1.0]
-   * @param max_rotation_magnitude Normalized max magnitude vector, usually gave by motion planner
-   * @param enable_closed_loop_Control Is module translation motor Velocity or Percent Output mode
-   * @param timestamp Current timestamp in FPGA timer
-   */
-  public synchronized void updateNormalizedTranslationVelocityControl(
-      Translation2d translation_vector,
-      double max_rotation_magnitude,
-      boolean enable_closed_loop_Control,
-      double timestamp) {
-    setNormalizedModuleVelocityTargets(
-        inverseKinematics.calculateNormalizedModuleVelocities(
-            translation_vector,
-            Util.limit(
-                headingController.calculate(getFieldCentricHeading(), timestamp),
-                max_rotation_magnitude),
-            getFieldCentricHeading()),
-        enable_closed_loop_Control);
-  }
-
   /************************************************************************************************
    * Stop & Disable Actions *
    ************************************************************************************************/
@@ -501,21 +473,26 @@ public class Swerve extends BaseSubsystem {
   /************************************************************************************************
    * Log & self-test *
    ************************************************************************************************/
+  private ShuffleboardTab tab;
+
+  private NetworkTableEntry swerveStateEntry;
+  private NetworkTableEntry isHeadingControllerEnabledEntry;
+
+  public void configSmartDashboard() {
+    tab = Shuffleboard.getTab("Swerve");
+
+    swerveStateEntry = tab.add("Swerve State", "None").getEntry();
+    isHeadingControllerEnabledEntry = tab.add("Is HeadingController Enabled", false).getEntry();
+  }
+
   @Override
   public void logToSmartDashboard() {
-    SmartDashboard.putString("Swerve State", swerveState.value);
-    SmartDashboard.putString("Robot Pose", getPose().toString());
     if (Config.ENABLE_DEBUG_OUTPUT) {
-      SmartDashboard.putBoolean("Is HeadingController Enabled", isHeadingControllerEnabled());
-      SmartDashboard.putNumber("Total Distance Travelled", getTotalDistance());
-      SmartDashboard.putNumber("Target Heading", getTargetHeading().getDegrees());
-      SmartDashboard.putBoolean("Is Heading on Target", isHeadingOnTarget());
-      SmartDashboard.putNumber("IMU Fused Heading", getFieldCentricHeading().getDegrees());
-      SmartDashboard.putBoolean("Is Module Velocities On Target", isModuleVelocitiesOnTarget());
-      SmartDashboard.putBoolean("Is Module Headings On Target", isModuleHeadingsOnTarget());
-      SmartDashboard.putBoolean("Is Trajectory Finished", isDoneWithTrajectory());
+      swerveStateEntry.setString(swerveState.value);
+      isHeadingControllerEnabledEntry.setBoolean(isHeadingControllerEnabled());
+
+      modules.forEach(SwerveDriveModule::logToSmartDashboard);
     }
-    modules.forEach(SwerveDriveModule::logToSmartDashboard);
   }
 
   @Override

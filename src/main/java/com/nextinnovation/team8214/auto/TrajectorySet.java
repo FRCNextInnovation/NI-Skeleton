@@ -27,20 +27,25 @@ public class TrajectorySet {
    ***********************************************************************************************/
   public final Trajectory<TimedState<Pose2dWithCurvature>> topStartToTopBall;
 
+  public final Trajectory<TimedState<Pose2dWithCurvature>> topBallToTopReject;
+
   public final Trajectory<TimedState<Pose2dWithCurvature>> bottomStartToBottomBall;
   public final Trajectory<TimedState<Pose2dWithCurvature>> bottomBallToMidBall;
   public final Trajectory<TimedState<Pose2dWithCurvature>> midBallToHumanStationBall;
-  public final Trajectory<TimedState<Pose2dWithCurvature>> humanStationBallToEndRobotShootPoint;
+  public final Trajectory<TimedState<Pose2dWithCurvature>> humanStationBallToHumanStationWait;
+  public final Trajectory<TimedState<Pose2dWithCurvature>> humanStationWaitToEndRobotShootPoint;
 
   private TrajectorySet() {
     // Top
     topStartToTopBall = getTopStartToTopBall();
+    topBallToTopReject = getTopBallToTopReject();
 
     // Bottom
     bottomStartToBottomBall = getBottomStartToBottomBall();
     bottomBallToMidBall = getBottomBallToMidBall();
     midBallToHumanStationBall = getMidBallToHumanStationBall();
-    humanStationBallToEndRobotShootPoint = getHumanStationBallToEndRobotShootPoint();
+    humanStationBallToHumanStationWait = getHumanStationBallToHumanStationWait();
+    humanStationWaitToEndRobotShootPoint = getHumanStationWaitToEndRobotShootPoint();
   }
 
   /************************************************************************************************
@@ -56,6 +61,16 @@ public class TrajectorySet {
     return TrajectoryGenerator.generateSwerveTrajectory(false, waypoints, 50.0);
   }
 
+  private Trajectory<TimedState<Pose2dWithCurvature>> getTopBallToTopReject() {
+    List<Pose2d> waypoints = new ArrayList<>();
+    waypoints.add(Field.CriticalWaypoints.TOP_BALL_COLLECT_FLIPPED_POSE);
+    waypoints.add(Field.CriticalWaypoints.TOP_END_BALL_REJECT_POSITION);
+
+    // ! Since trajectory generator can't set swerve kinematics constraint, so the max translation
+    // ! velocity should be adjusted manually.
+    return TrajectoryGenerator.generateSwerveTrajectory(false, waypoints, 50.0);
+  }
+
   private Trajectory<TimedState<Pose2dWithCurvature>> getBottomStartToBottomBall() {
     List<Pose2d> waypoints = new ArrayList<>();
     waypoints.add(Field.CriticalWaypoints.BOTTOM_START_ROBOT_POSE);
@@ -63,7 +78,7 @@ public class TrajectorySet {
 
     // ! Since trajectory generator can't set swerve kinematics constraint, so the max translation
     // ! velocity should be adjusted manually.
-    return TrajectoryGenerator.generateSwerveTrajectory(false, waypoints, 110.0);
+    return TrajectoryGenerator.generateSwerveTrajectory(false, waypoints, 80.0);
   }
 
   private Trajectory<TimedState<Pose2dWithCurvature>> getBottomBallToMidBall() {
@@ -73,26 +88,36 @@ public class TrajectorySet {
 
     // ! Since trajectory generator can't set swerve kinematics constraint, so the max translation
     // ! velocity should be adjusted manually.
-    return TrajectoryGenerator.generateSwerveTrajectory(false, waypoints, 90.0);
+    return TrajectoryGenerator.generateSwerveTrajectory(false, waypoints, 80.0);
   }
 
   private Trajectory<TimedState<Pose2dWithCurvature>> getMidBallToHumanStationBall() {
     List<Pose2d> waypoints = new ArrayList<>();
-    waypoints.add(Field.CriticalWaypoints.MID_BALL_COLLECT_POSE);
+    waypoints.add(Field.CriticalWaypoints.MID_BALL_COLLECT_FLIPPED_POSE);
     waypoints.add(Field.CriticalWaypoints.HUMAN_STATION_BALL_COLLECT_POSE);
 
     // ! Since trajectory generator can't set swerve kinematics constraint, so the max translation
     // ! velocity should be adjusted manually.
-    return TrajectoryGenerator.generateSwerveTrajectory(false, waypoints, 110.0);
+    return TrajectoryGenerator.generateSwerveTrajectory(false, waypoints, 95.0);
   }
 
-  private Trajectory<TimedState<Pose2dWithCurvature>> getHumanStationBallToEndRobotShootPoint() {
+  private Trajectory<TimedState<Pose2dWithCurvature>> getHumanStationBallToHumanStationWait() {
     List<Pose2d> waypoints = new ArrayList<>();
     waypoints.add(Field.CriticalWaypoints.HUMAN_STATION_BALL_COLLECT_FLIPPED_POSE);
+    waypoints.add(Field.CriticalWaypoints.HUMAN_STATION_WAIT_FLIPPED_POSE);
+
+    // ! Since trajectory generator can't set swerve kinematics constraint, so the max translation
+    // ! velocity should be adjusted manually.
+    return TrajectoryGenerator.generateSwerveTrajectory(false, waypoints, 50.0);
+  }
+
+  private Trajectory<TimedState<Pose2dWithCurvature>> getHumanStationWaitToEndRobotShootPoint() {
+    List<Pose2d> waypoints = new ArrayList<>();
+    waypoints.add(Field.CriticalWaypoints.HUMAN_STATION_WAIT_FLIPPED_POSE);
     waypoints.add(Field.CriticalWaypoints.BOTTOM_END_ROBOT_SHOOT_FLIPPED_POSE);
 
     // ! Since trajectory generator can't set swerve kinematics constraint, so the max translation
     // ! velocity should be adjusted manually.
-    return TrajectoryGenerator.generateSwerveTrajectory(false, waypoints, 150.0);
+    return TrajectoryGenerator.generateSwerveTrajectory(false, waypoints, 100.0);
   }
 }

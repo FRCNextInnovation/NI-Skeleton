@@ -18,8 +18,14 @@ public class AutoModeChooser {
   }
 
   public enum Alliance {
-    RED,
-    BLUE
+    RED("Red"),
+    BLUE("Blue");
+
+    public final String name;
+
+    Alliance(String name) {
+      this.name = name;
+    }
   }
 
   public enum AutoOption {
@@ -50,8 +56,8 @@ public class AutoModeChooser {
 
     // Alliance Chooser
     allianceChooser = new SendableChooser<>();
-    modeChooser.setDefaultOption(AutoOption.BOTTOM_5_BALLS.name, AutoOption.BOTTOM_5_BALLS);
-    allianceChooser.addOption("Red", Alliance.RED);
+    allianceChooser.setDefaultOption(DEFAULT_ALLIANCE.name, DEFAULT_ALLIANCE);
+    allianceChooser.addOption(Alliance.BLUE.name, Alliance.BLUE);
 
     selectedOption = DEFAULT_MODE;
     selectedAlliance = DEFAULT_ALLIANCE;
@@ -80,6 +86,10 @@ public class AutoModeChooser {
     }
   }
 
+  public boolean isAllianceRed() {
+    return selectedAlliance == Alliance.RED;
+  }
+
   public boolean isStandardCarpetSide() {
     return selectedAlliance == Alliance.BLUE;
   }
@@ -87,7 +97,7 @@ public class AutoModeChooser {
   public void logToSmartDashboard() {
     SmartDashboard.putData("Mode Chooser", modeChooser);
     SmartDashboard.putData("Alliance Chooser", allianceChooser);
-    SmartDashboard.putString("Selected Alliance", allianceChooser.getSelected().name());
-    SmartDashboard.putString("Selected Auto Mode", modeChooser.getSelected().name);
+    SmartDashboard.putString("Selected Alliance", selectedAlliance.name);
+    SmartDashboard.putString("Selected Auto Mode", selectedOption.name);
   }
 }

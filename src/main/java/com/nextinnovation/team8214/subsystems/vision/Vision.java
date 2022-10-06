@@ -6,9 +6,14 @@ import com.nextinnovation.lib.geometry.Translation2d;
 import com.nextinnovation.lib.loops.ILoop;
 import com.nextinnovation.lib.loops.ILooper;
 import com.nextinnovation.lib.subsystems.BaseSubsystem;
+import com.nextinnovation.lib.utils.InterpolatingDouble;
+import com.nextinnovation.lib.utils.Units;
 import com.nextinnovation.team8214.Config;
 import com.nextinnovation.team8214.Field;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 
 public class Vision extends BaseSubsystem {
   /***********************************************************************************************
@@ -24,7 +29,9 @@ public class Vision extends BaseSubsystem {
           }
 
           @Override
-          public void onLoop(double timestamp) {}
+          public void onLoop(double timestamp) {
+            readPeriodicInputs();
+          }
 
           @Override
           public void onStop(double timestamp) {
@@ -37,8 +44,27 @@ public class Vision extends BaseSubsystem {
   /***********************************************************************************************
    * Periodic IO *
    ***********************************************************************************************/
+  public static class VisionTargetInfo {
+    public Rotation2d targetHeading;
+    public Rotation2d targetElevation;
+    public double targetDistance;
+    public double timestamp;
+
+    public VisionTargetInfo(
+        Rotation2d target_heading,
+        Rotation2d target_elevation,
+        double target_distance,
+        double timestamp) {
+      targetHeading = target_heading;
+      targetElevation = target_elevation;
+      targetDistance = target_distance;
+      this.timestamp = timestamp;
+    }
+  }
+
   private static class PeriodicInput {
     double latency = 255.0;
+    double timestamp = 0.0;
     boolean isUpdated = false;
     boolean hasTarget = false;
     Rotation2d targetX = Rotation2d.identity();
@@ -50,6 +76,7 @@ public class Vision extends BaseSubsystem {
     synchronized (ioLock) {
       periodicInput.isUpdated = true;
       periodicInput.latency = limelight.getLatency();
+      periodicInput.timestamp = Timer.getFPGATimestamp() - periodicInput.latency;
       periodicInput.hasTarget = limelight.hasTarget();
       if (periodicInput.hasTarget) {
         periodicInput.targetX = limelight.getTargetX();
@@ -100,6 +127,7 @@ public class Vision extends BaseSubsystem {
   private final Object ioLock = new Object();
 
   public Vision() {
+    configSmartDashboard();
     setState(VisionState.OFF);
   }
 
@@ -145,13 +173,13 @@ public class Vision extends BaseSubsystem {
     }
   }
 
-  public Rotation2d getSceneCentricTargetAngle() {
+  private Rotation2d getTargetElevation() {
     synchronized (ioLock) {
       return periodicInput.targetY;
     }
   }
 
-  public Rotation2d getTargetHeading() {
+  private Rotation2d getTargetHeading() {
     synchronized (ioLock) {
       return periodicInput.targetX.inverse();
     }
@@ -162,9 +190,20 @@ public class Vision extends BaseSubsystem {
    *
    * @return camera latency in ms
    */
-  public double getLatency() {
+  private double getLatency() {
     synchronized (ioLock) {
       return periodicInput.latency / 1000.0;
+    }
+  }
+
+  /**
+   * Get target timestamp in seconds
+   *
+   * @return target timestamp in seconds
+   */
+  private double getTargetTimestamp() {
+    synchronized (ioLock) {
+      return periodicInput.timestamp;
     }
   }
 
@@ -173,10 +212,15 @@ public class Vision extends BaseSubsystem {
    *
    * @return target distance in inch
    */
-  public double getTargetDistance() {
-    return (Field.VISUAL_TARGET_VISUAL_CENTER_HEIGHT - VisionConfig.CAMERA_HEIGHT_INCH)
-        / Math.tan(
-            getSceneCentricTargetAngle().getRadians() + VisionConfig.CAMERA_ELEVATION.getRadians());
+  private double getTargetDistance() {
+    double realDistanceInch =
+        (Field.VISUAL_TARGET_VISUAL_CENTER_HEIGHT - VisionConfig.CAMERA_HEIGHT_INCH)
+            / Math.tan(
+                getTargetElevation().getRadians() + VisionConfig.CAMERA_ELEVATION.getRadians());
+
+    return VisionConfig.visionDistanceRemappedMap.getInterpolated(
+            new InterpolatingDouble(realDistanceInch))
+        .value;
   }
 
   /**
@@ -186,6 +230,18 @@ public class Vision extends BaseSubsystem {
    */
   public Translation2d getTargetOrientation() {
     return Translation2d.fromPolar(getTargetHeading(), getTargetDistance());
+  }
+
+  /**
+   * Get camera centric vision target info
+   *
+   * @return vision target info
+   */
+  public VisionTargetInfo getVisionTargetInfo() {
+    synchronized (ioLock) {
+      return new VisionTargetInfo(
+          getTargetHeading(), getTargetElevation(), getTargetDistance(), getTargetTimestamp());
+    }
   }
 
   /************************************************************************************************
@@ -199,16 +255,35 @@ public class Vision extends BaseSubsystem {
   /************************************************************************************************
    * Log & self-test *
    ************************************************************************************************/
+  private ShuffleboardTab tab;
+
+  private NetworkTableEntry visionStateEntry;
+  private NetworkTableEntry hasVisionTargetEntry;
+  private NetworkTableEntry targetOrientationEntry;
+  private NetworkTableEntry targetElevationEntry;
+  private NetworkTableEntry fixedDistanceEntry;
+  private NetworkTableEntry cameraLatencyEntry;
+
+  public void configSmartDashboard() {
+    tab = Shuffleboard.getTab("Vision");
+
+    visionStateEntry = tab.add("Vision State", "None").getEntry();
+    hasVisionTargetEntry = tab.add("Has Vision Target", false).getEntry();
+    targetOrientationEntry = tab.add("Target Orientation", 0.0).getEntry();
+    targetElevationEntry = tab.add("Target Elevation", 0.0).getEntry();
+    fixedDistanceEntry = tab.add("Fixed Distance", 99.99).getEntry();
+    cameraLatencyEntry = tab.add("Camera Latency", 99.99).getEntry();
+  }
+
   @Override
   public void logToSmartDashboard() {
-    SmartDashboard.putString("Vision State", visionState.value);
-    SmartDashboard.putBoolean("Has Vision Target", hasTarget());
-    SmartDashboard.putBoolean("Is Vision Enabled", isEnabled());
     if (Config.ENABLE_DEBUG_OUTPUT) {
-      SmartDashboard.putNumber("Camera Latency", getLatency());
-      if (isEnabled() && hasTarget()) {
-        SmartDashboard.putString("Target Orientation", getTargetOrientation().toString());
-      }
+      visionStateEntry.setString(visionState.value);
+      hasVisionTargetEntry.setBoolean(hasTarget());
+      targetOrientationEntry.setNumber(getTargetOrientation().direction().getDegrees());
+      targetElevationEntry.setNumber(getTargetElevation().getDegrees());
+      fixedDistanceEntry.setNumber(Units.inches_to_meters(getTargetDistance()));
+      cameraLatencyEntry.setNumber(getLatency());
     }
   }
 }

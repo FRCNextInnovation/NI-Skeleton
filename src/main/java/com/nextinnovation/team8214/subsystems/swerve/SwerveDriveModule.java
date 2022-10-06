@@ -17,7 +17,6 @@ import com.nextinnovation.lib.subsystems.BaseSubsystem;
 import com.nextinnovation.lib.utils.Util;
 import com.nextinnovation.team8214.Config;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class SwerveDriveModule extends BaseSubsystem {
   /************************************************************************************************
@@ -25,6 +24,7 @@ public class SwerveDriveModule extends BaseSubsystem {
    ************************************************************************************************/
   private static class PeriodicInput {
     public int rotationMotorEncoderPosition = 0;
+    public int rotationMotorEncoderVelocity = 0;
     public int translationMotorEncoderPosition = 0;
     public int previousTranslationMotorEncoderPosition = 0;
     public int translationMotorEncoderVelocity = 0;
@@ -36,9 +36,11 @@ public class SwerveDriveModule extends BaseSubsystem {
   }
 
   @Override
-  public synchronized void readPeriodicInputs() {
+  public void readPeriodicInputs() {
     periodicInput.rotationMotorEncoderPosition =
         Util.roundToInt(rotationMotor.getSelectedSensorPosition());
+    periodicInput.rotationMotorEncoderVelocity =
+        Util.roundToInt(rotationMotor.getSelectedSensorVelocity());
     periodicInput.translationMotorEncoderPosition =
         Util.roundToInt(translationMotor.getSelectedSensorPosition());
     periodicInput.translationMotorEncoderVelocity =
@@ -53,9 +55,14 @@ public class SwerveDriveModule extends BaseSubsystem {
   }
 
   @Override
-  public synchronized void writePeriodicOutputs() {
+  public void writePeriodicOutputs() {
     translationMotor.set(
-        periodicOutput.translationMotorControlMode, periodicOutput.translationMotorSetpoint);
+        periodicOutput.translationMotorControlMode,
+        periodicOutput.translationMotorSetpoint
+            + (periodicOutput.translationMotorControlMode == ControlMode.PercentOutput
+                    && !Util.epsilonEquals(periodicOutput.translationMotorSetpoint, 0.0)
+                ? Math.copySign(translationKs, periodicOutput.translationMotorSetpoint)
+                : 0.0));
     rotationMotor.set(
         periodicOutput.rotationMotorControlMode, periodicOutput.rotationMotorSetpoint);
   }
@@ -69,11 +76,14 @@ public class SwerveDriveModule extends BaseSubsystem {
   private Pose2d estimatedRobotPose = new Pose2d();
   private Translation2d modulePosition;
   private final int rotationCalibrationOffset;
+  private final double translationKs;
   private boolean isStandardCarpetSide = false;
   private final Translation2d modulePositionToTranslationCenter;
   private final PeriodicInput periodicInput = new PeriodicInput();
   private final PeriodicOutput periodicOutput = new PeriodicOutput();
   private final CANCoder externalRotationEncoder;
+
+  private int resetIteration = 0;
 
   /**
    * Constructor
@@ -83,6 +93,7 @@ public class SwerveDriveModule extends BaseSubsystem {
    * @param rotation_motor_id CAN ID of translation motor
    * @param external_rotation_encoder_id CAN ID of CANCoder
    * @param rotation_calibration_offset Calibration offset by CANCoder
+   * @param translation_ks Compensated ks for translation motor open loop
    * @param module_position_to_robot_centric Module position related to robot centric in inch
    */
   public SwerveDriveModule(
@@ -91,12 +102,14 @@ public class SwerveDriveModule extends BaseSubsystem {
       int rotation_motor_id,
       int external_rotation_encoder_id,
       int rotation_calibration_offset,
+      double translation_ks,
       Translation2d module_position_to_robot_centric) {
     moduleName = "Swerve Module " + module_id + " ";
     translationMotor = new LazyTalonFX(translation_motor_id);
     rotationMotor = new LazyTalonFX(rotation_motor_id);
     externalRotationEncoder = new CANCoder(external_rotation_encoder_id);
     rotationCalibrationOffset = rotation_calibration_offset;
+    translationKs = translation_ks;
     modulePositionToTranslationCenter = module_position_to_robot_centric;
     // configExternalRotationSensor();
     configTranslationMotor();
@@ -105,6 +118,23 @@ public class SwerveDriveModule extends BaseSubsystem {
     readPeriodicInputs();
     synchronizePreviousTranslationEncoderPosition();
     resetSensors();
+  }
+
+  public SwerveDriveModule(
+      int module_id,
+      int translation_motor_id,
+      int rotation_motor_id,
+      int external_rotation_encoder_id,
+      int rotation_calibration_offset,
+      Translation2d module_position_to_robot_centric) {
+    this(
+        module_id,
+        translation_motor_id,
+        rotation_motor_id,
+        external_rotation_encoder_id,
+        rotation_calibration_offset,
+        0.0,
+        module_position_to_robot_centric);
   }
 
   private synchronized void configExternalRotationSensor() {
@@ -141,10 +171,6 @@ public class SwerveDriveModule extends BaseSubsystem {
     TalonUtil.checkError(
         translationMotor.configVelocityMeasurementWindow(1, Config.CAN_TIMEOUT_MS),
         moduleName + " Translation: Can't set velocity measurement window!");
-    TalonUtil.checkError(
-        translationMotor.configOpenloopRamp(
-            SwerveDriveModuleConfig.Translation.OPEN_LOOP_RAMP, Config.CAN_TIMEOUT_MS),
-        moduleName + " Translation: Can't set open loop ramp!");
     TalonUtil.checkError(
         translationMotor.configVoltageCompSaturation(10.0, Config.CAN_TIMEOUT_MS),
         moduleName + " Translation: Can't set voltage comp saturation!");
@@ -231,9 +257,8 @@ public class SwerveDriveModule extends BaseSubsystem {
   }
 
   private synchronized void calibrateRotationEncoder() {
-    rotationMotor.setSelectedSensorPosition(
-        getRotationEncoderCalibrationTarget(), 0, Config.CAN_TIMEOUT_MS);
-    Timer.delay(0.75);
+    Timer.delay(SwerveDriveModuleConfig.Rotation.CALIBRATION_DELAY);
+    rotationMotor.setSelectedSensorPosition(getRotationEncoderCalibrationTarget());
   }
 
   /************************************************************************************************
@@ -320,7 +345,7 @@ public class SwerveDriveModule extends BaseSubsystem {
     return getRobotCentricRotationHeading().rotateBy(robot_heading);
   }
 
-  public void setRotationHeadingTarget(double heading_degrees) {
+  private void setRotationHeadingTarget(double heading_degrees) {
     periodicOutput.rotationMotorControlMode = ControlMode.Position;
     periodicOutput.rotationMotorSetpoint =
         degreesToRotationEncoderUnits(
@@ -452,6 +477,12 @@ public class SwerveDriveModule extends BaseSubsystem {
     return encoder_units / SwerveDriveModuleConfig.Rotation.ENCODER_UNITS_PER_DEGREE;
   }
 
+  private double rotationEncoderVelocityToRadPerSecond(double encoder_units_per_100ms) {
+    return encoder_units_per_100ms
+        * 10.0
+        / SwerveDriveModuleConfig.Rotation.ENCODER_UNITS_PER_DEGREE;
+  }
+
   /************************************************************************************************
    * Stop & Disable Actions *
    ************************************************************************************************/
@@ -465,12 +496,7 @@ public class SwerveDriveModule extends BaseSubsystem {
    * Log & self-test *
    ************************************************************************************************/
   @Override
-  public void logToSmartDashboard() {
-    SmartDashboard.putNumber(
-        moduleName + "rotation calibration position offset", getRotationEncoderCalibrationTarget());
-    SmartDashboard.putNumber(
-        moduleName + "translation speed", periodicInput.translationMotorEncoderVelocity);
-  }
+  public void logToSmartDashboard() {}
 
   private boolean testTranslationMotorCalibration() {
     return translationMotor.getInverted() == SwerveDriveModuleConfig.Translation.IS_INVERT

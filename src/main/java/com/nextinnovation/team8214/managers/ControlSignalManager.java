@@ -2,11 +2,39 @@ package com.nextinnovation.team8214.managers;
 
 import com.nextinnovation.lib.geometry.Translation2d;
 import com.nextinnovation.lib.io.StatefulXboxController;
+import com.nextinnovation.lib.loops.ILoop;
+import com.nextinnovation.lib.loops.ILooper;
 import com.nextinnovation.lib.utils.Util;
 import com.nextinnovation.team8214.Ports;
-import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.wpilibj.DriverStation;
 
 public class ControlSignalManager {
+  /***********************************************************************************************
+   * Control Loop *
+   ***********************************************************************************************/
+  public void registerEnabledLoops(ILooper enabledLooper) {
+    ILoop loop =
+        new ILoop() {
+          @Override
+          public void onStart(double timestamp) {
+            resetControlFlags();
+          }
+
+          @Override
+          public void onLoop(double timestamp) {
+            if (!DriverStation.isAutonomousEnabled()) {
+              update();
+            }
+          }
+
+          @Override
+          public void onStop(double timestamp) {
+            resetControlFlags();
+          }
+        };
+    enabledLooper.register(loop);
+  }
+
   /***********************************************************************************************
    * Singleton *
    ***********************************************************************************************/
@@ -26,15 +54,19 @@ public class ControlSignalManager {
 
   private final StatefulXboxController codriverController;
 
-  private final SlewRateLimiter swerveTranslationFilter = new SlewRateLimiter(4.0);
-  private final SlewRateLimiter swerveRotationFilter = new SlewRateLimiter(4.0);
-
   private ControlSignalManager() {
     driverController =
         new StatefulXboxController(Ports.DriverJoysticks.DRIVER_CONTROLLER_PORT, 0.5);
     codriverController =
         new StatefulXboxController(Ports.DriverJoysticks.CODRIVER_CONTROLLER_PORT, 0.5);
+
+    resetControlFlags();
   }
+
+  /************************************************************************************************
+   * Reset *
+   ************************************************************************************************/
+  public synchronized void resetControlFlags() {}
 
   /************************************************************************************************
    * Getter & Setter *
@@ -44,33 +76,28 @@ public class ControlSignalManager {
         Util.applyRemappedCircularDeadband(
                 new Translation2d(-driverController.getRightY(), -driverController.getRightX()),
                 0.09375)
-            .scale(0.6);
-    if (driverController.getButton(StatefulXboxController.ButtonId.TRIGGER_LEFT).isBeingPressed()) {
-      input = input.scale(0.5);
-    }
-
-    input =
-        Translation2d.fromPolar(
-            input.direction(), swerveTranslationFilter.calculate(Math.pow(input.norm(), 2)));
+            .scale(0.75);
 
     return input;
   }
 
   public double getSwerveManualRotationMagnitude() {
-    double input = Util.applyRemappedDeadband(-driverController.getLeftX(), 0.09375) * 0.5;
+    double input = Util.applyRemappedDeadband(-driverController.getLeftX(), 0.09375) * 0.27;
 
-    if (driverController.getButton(StatefulXboxController.ButtonId.TRIGGER_LEFT).isBeingPressed()) {
-      input *= (0.5);
-    }
-
-    return swerveRotationFilter.calculate(input);
+    return input;
   }
 
   /************************************************************************************************
    * Update *
    ************************************************************************************************/
-  public synchronized void update() {
+  private synchronized void update() {
+    // Use when in manual mode
     driverController.updateButtons();
     codriverController.updateButtons();
   }
+
+  /************************************************************************************************
+   * Log *
+   ************************************************************************************************/
+  public void logToSmartDashBoard() {}
 }
