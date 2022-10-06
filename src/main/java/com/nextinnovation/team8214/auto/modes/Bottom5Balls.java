@@ -22,7 +22,5 @@ public class Bottom5Balls extends BaseAutoMode {
     runAction(new SetTrajectoryAction(trajectorySet.bottomBallToMidBall, 135.0));
     runAction(new WaitAction(1.5));
     runAction(new SetTrajectoryAction(trajectorySet.midBallToHumanStationBall, -135.0));
-    runAction(new WaitAction(1.5));
-    runAction(new SetTrajectoryAction(trajectorySet.humanStationBallToEndRobotShootPoint, -135.0));
   }
 }
