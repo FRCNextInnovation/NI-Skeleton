@@ -18,6 +18,11 @@ public class LazyTalonFX extends TalonFX {
     configFactoryDefault();
   }
 
+  public LazyTalonFX(int deviceId, String canBus) {
+    super(deviceId, canBus);
+    configFactoryDefault();
+  }
+
   /**
    * Basic method to config status frame period
    *

@@ -10,7 +10,7 @@ package com.nextinnovation.lib.controllers;
 /** Robot position controller for translation */
 public class TranslationAxisController {
   private boolean isEnabled = false;
-  private double targetOupt;
+  private double targetOut;
   private double previousUpdateTimestamp = Double.NaN;
   private final SynchronousPIDF pidController;
 
@@ -53,9 +53,9 @@ public class TranslationAxisController {
     pidController.setOutputRange(minOutput, maxOutput);
   }
 
-  public synchronized void setTarget(double targetOupt) {
-    this.targetOupt = targetOupt;
-    pidController.setSetpoint(this.targetOupt);
+  public synchronized void setTarget(double targetOut) {
+    this.targetOut = targetOut;
+    pidController.setSetpoint(this.targetOut);
   }
 
   public double getTarget() {
@@ -72,5 +72,9 @@ public class TranslationAxisController {
               input, timestamp - previousUpdateTimestamp, Double.isNaN(previousUpdateTimestamp));
     }
     return output;
+  }
+
+  public boolean onTarget() {
+    return pidController.onTarget();
   }
 }

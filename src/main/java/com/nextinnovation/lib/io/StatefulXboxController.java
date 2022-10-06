@@ -1,9 +1,9 @@
 package com.nextinnovation.lib.io;
 
+import edu.wpi.first.wpilibj.XboxController;
+
 import java.util.HashMap;
 import java.util.Map;
-
-import edu.wpi.first.wpilibj.XboxController;
 
 public class StatefulXboxController extends XboxController {
   public enum ButtonId {
@@ -32,7 +32,7 @@ public class StatefulXboxController extends XboxController {
   }
 
   public class Button {
-    private ButtonId buttonId;
+    private final ButtonId buttonId;
     private boolean buttonActive = false;
     private boolean activationReported = true;
     private boolean deactivationReported = true;

@@ -37,12 +37,12 @@ public class InterpolatingDouble
 
   @Override
   public int compareTo(InterpolatingDouble other) {
-    if (other.value < value) {
-      return 1;
-    } else if (other.value > value) {
-      return -1;
-    } else {
+    if (Util.epsilonEquals(other.value, value)) {
       return 0;
+    } else if (other.value < value) {
+      return 1;
+    } else {
+      return -1;
     }
   }
 }

@@ -104,8 +104,39 @@ public class Util {
     return angle;
   }
 
+  public static double boundAngleToNegative180To180DegreesWithCompensate(
+      double angle, double compensate_angle) {
+    return boundAngleToScopeWithCompensate(angle, -180.0, 180.0, compensate_angle);
+  }
+
+  public static double boundAngleToScopeWithCompensate(
+      double angle, double start_angle, double end_angle, double compensate_angle) {
+    angle %= 360.0;
+
+    if (angle <= start_angle - compensate_angle) {
+      angle += 360.0;
+    } else if (angle >= end_angle + compensate_angle) {
+      angle -= 360.0;
+    }
+
+    return angle;
+  }
+
   public static double boundAngleTo0To360Degrees(double angle) {
     return boundToNonnegativeScope(angle, 360.0);
+  }
+
+  public static double boundAngleTo0ToNegative360Degrees(double angle) {
+    return boundToNonnegativeScope(angle, 360.0) - 360.0;
+  }
+
+  public static double boundAngleTo360OrNegative360ByCopySign(
+      double target_angle, double currant_angle) {
+    if (boundAngleToNegative180To180Degrees(currant_angle) <= 0.0) {
+      return boundAngleTo0ToNegative360Degrees(target_angle);
+    } else {
+      return boundAngleTo0To360Degrees(target_angle);
+    }
   }
 
   public static double boundAngleToClosestScope(double angle, double referenceAngle) {
