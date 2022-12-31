@@ -78,6 +78,16 @@ public class Swerve extends BaseSubsystem {
                           Util.boundAngleTo0To360Degrees(getFieldCentricHeading().getDegrees()),
                           timestamp);
 
+                  if (Util.epsilonEquals(rotationTrajectoryInput, 0.0)) {
+                    if (!isHeadingControllerEnabled()
+                            && Math.abs(getAngularVelocity().getUnboundedDegrees()) <= 5.625) {
+                      setTargetHeadingToCurrentHeading();
+                      enableHeadingController();
+                    }
+                  } else {
+                    disableHeadingController();
+                  }
+
                   updateNormalizedVectorialVelocityControl(
                       translationalTrajectoryInput, rotationTrajectoryInput, false, timestamp);
                 } else {

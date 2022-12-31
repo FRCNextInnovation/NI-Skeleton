@@ -39,20 +39,4 @@ public final class SwerveConfig {
 
   // Speed Config
   public static final double MAX_SPEED_INCHES_PER_SECOND = 180.0;
-
-  public static final class HeadingController {
-    public static final class Manual {
-      public static double KP = 0.375;
-      public static double KI = 0.0;
-      public static double KD = 0.01;
-      public static double ERROR_TOLERANCE = 1.0 / 9.0;
-    }
-
-    public static final class Auto {
-      public static double KP = 0.65;
-      public static double KI = 0.0;
-      public static double KD = 0.1;
-      public static double ERROR_TOLERANCE = 1.0 / 5.0;
-    }
-  }
 }

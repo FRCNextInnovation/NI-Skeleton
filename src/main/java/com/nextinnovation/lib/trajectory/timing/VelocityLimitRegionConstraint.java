@@ -29,7 +29,7 @@ public class VelocityLimitRegionConstraint<S extends ITranslation2d<S>>
   }
 
   @Override
-  public ITimingConstraint.MinMaxAcceleration getMinMaxAcceleration(S state, double velocity) {
+  public MinMaxAcceleration getMinMaxAcceleration(S state, double velocity) {
     return MinMaxAcceleration.kNoLimits;
   }
 }
