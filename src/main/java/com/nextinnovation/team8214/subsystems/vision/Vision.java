@@ -1,19 +1,18 @@
 package com.nextinnovation.team8214.subsystems.vision;
 
-import com.nextinnovation.lib.drivers.Limelight;
-import com.nextinnovation.lib.geometry.Rotation2d;
+import com.nextinnovation.lib.drivers.PhotonVision;
+import com.nextinnovation.lib.drivers.VisionResult;
 import com.nextinnovation.lib.geometry.Translation2d;
 import com.nextinnovation.lib.loops.ILoop;
 import com.nextinnovation.lib.loops.ILooper;
 import com.nextinnovation.lib.subsystems.BaseSubsystem;
-import com.nextinnovation.lib.utils.InterpolatingDouble;
 import com.nextinnovation.lib.utils.Units;
 import com.nextinnovation.team8214.Config;
 import com.nextinnovation.team8214.Field;
 import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import org.photonvision.common.hardware.VisionLEDMode;
 
 public class Vision extends BaseSubsystem {
   /***********************************************************************************************
@@ -44,43 +43,27 @@ public class Vision extends BaseSubsystem {
   /***********************************************************************************************
    * Periodic IO *
    ***********************************************************************************************/
-  public static class VisionTargetInfo {
-    public Rotation2d targetHeading;
-    public Rotation2d targetElevation;
-    public double targetDistance;
-    public double timestamp;
-
-    public VisionTargetInfo(
-        Rotation2d target_heading,
-        Rotation2d target_elevation,
-        double target_distance,
-        double timestamp) {
-      targetHeading = target_heading;
-      targetElevation = target_elevation;
-      targetDistance = target_distance;
-      this.timestamp = timestamp;
-    }
-  }
-
   private static class PeriodicInput {
-    double latency = 255.0;
-    double timestamp = 0.0;
-    boolean isUpdated = false;
-    boolean hasTarget = false;
-    Rotation2d targetX = Rotation2d.identity();
-    Rotation2d targetY = Rotation2d.identity();
+    public boolean isUpdated = false;
+    public VisionResult visionResult = new VisionResult();
   }
 
   @Override
   public void readPeriodicInputs() {
     synchronized (ioLock) {
       periodicInput.isUpdated = true;
-      periodicInput.latency = limelight.getLatency();
-      periodicInput.timestamp = Timer.getFPGATimestamp() - periodicInput.latency;
-      periodicInput.hasTarget = limelight.hasTarget();
-      if (periodicInput.hasTarget) {
-        periodicInput.targetX = limelight.getTargetX();
-        periodicInput.targetY = limelight.getTargetY();
+      periodicInput.visionResult = photonVision.getVisionResult();
+      if (!periodicInput.visionResult.hasTarget) {
+        periodicInput.visionResult.targetDistance =
+            (Field.VISUAL_TARGET_VISUAL_CENTER_HEIGHT - VisionConfig.CAMERA_HEIGHT_INCH)
+                / Math.tan(
+                    periodicInput.visionResult.targetElevation.getRadians()
+                        + VisionConfig.CAMERA_ELEVATION.getRadians());
+
+        periodicInput.visionResult.targetOrientation =
+            Translation2d.fromPolar(
+                periodicInput.visionResult.targetHeading,
+                periodicInput.visionResult.targetDistance);
       }
     }
   }
@@ -121,7 +104,7 @@ public class Vision extends BaseSubsystem {
    ***********************************************************************************************/
   private final PeriodicInput periodicInput = new PeriodicInput();
 
-  private final Limelight limelight = new Limelight();
+  private final PhotonVision photonVision = new PhotonVision(VisionConfig.CAMERA_NAME);
   private boolean isEnabled = false;
 
   private final Object ioLock = new Object();
@@ -136,17 +119,17 @@ public class Vision extends BaseSubsystem {
    ************************************************************************************************/
   private void enable() {
     isEnabled = true;
-    limelight.setLedMode(0);
+    photonVision.setLed(VisionLEDMode.kOn);
   }
 
   private void off() {
     isEnabled = false;
-    limelight.setLedMode(1);
+    photonVision.setLed(VisionLEDMode.kOff);
   }
 
   private void blink() {
     isEnabled = false;
-    limelight.setLedMode(2);
+    photonVision.setLed(VisionLEDMode.kBlink);
   }
 
   /************************************************************************************************
@@ -167,80 +150,14 @@ public class Vision extends BaseSubsystem {
     }
   }
 
-  public boolean hasTarget() {
-    synchronized (ioLock) {
-      return periodicInput.hasTarget && isEnabled;
-    }
-  }
-
-  private Rotation2d getTargetElevation() {
-    synchronized (ioLock) {
-      return periodicInput.targetY;
-    }
-  }
-
-  private Rotation2d getTargetHeading() {
-    synchronized (ioLock) {
-      return periodicInput.targetX.inverse();
-    }
-  }
-
   /**
-   * Get camera latency in ms
+   * Get camera centric vision result
    *
-   * @return camera latency in ms
+   * @return vision result
    */
-  private double getLatency() {
+  public VisionResult getVisionResult() {
     synchronized (ioLock) {
-      return periodicInput.latency / 1000.0;
-    }
-  }
-
-  /**
-   * Get target timestamp in seconds
-   *
-   * @return target timestamp in seconds
-   */
-  private double getTargetTimestamp() {
-    synchronized (ioLock) {
-      return periodicInput.timestamp;
-    }
-  }
-
-  /**
-   * Get camera centric distance from vision target in inch
-   *
-   * @return target distance in inch
-   */
-  private double getTargetDistance() {
-    double realDistanceInch =
-        (Field.VISUAL_TARGET_VISUAL_CENTER_HEIGHT - VisionConfig.CAMERA_HEIGHT_INCH)
-            / Math.tan(
-                getTargetElevation().getRadians() + VisionConfig.CAMERA_ELEVATION.getRadians());
-
-    return VisionConfig.visionDistanceRemappedMap.getInterpolated(
-            new InterpolatingDouble(realDistanceInch))
-        .value;
-  }
-
-  /**
-   * Get camera centric orientation from vision target with distance in inch
-   *
-   * @return target distance in inch by a Translation2d
-   */
-  public Translation2d getTargetOrientation() {
-    return Translation2d.fromPolar(getTargetHeading(), getTargetDistance());
-  }
-
-  /**
-   * Get camera centric vision target info
-   *
-   * @return vision target info
-   */
-  public VisionTargetInfo getVisionTargetInfo() {
-    synchronized (ioLock) {
-      return new VisionTargetInfo(
-          getTargetHeading(), getTargetElevation(), getTargetDistance(), getTargetTimestamp());
+      return periodicInput.visionResult;
     }
   }
 
@@ -279,11 +196,15 @@ public class Vision extends BaseSubsystem {
   public void logToSmartDashboard() {
     if (Config.ENABLE_DEBUG_OUTPUT) {
       visionStateEntry.setString(visionState.value);
-      hasVisionTargetEntry.setBoolean(hasTarget());
-      targetOrientationEntry.setNumber(getTargetOrientation().direction().getDegrees());
-      targetElevationEntry.setNumber(getTargetElevation().getDegrees());
-      fixedDistanceEntry.setNumber(Units.inches_to_meters(getTargetDistance()));
-      cameraLatencyEntry.setNumber(getLatency());
+      hasVisionTargetEntry.setBoolean(periodicInput.visionResult.hasTarget);
+
+      if (periodicInput.visionResult.hasTarget) {
+        targetOrientationEntry.setNumber(periodicInput.visionResult.targetHeading.getDegrees());
+        targetElevationEntry.setNumber(periodicInput.visionResult.targetElevation.getDegrees());
+        fixedDistanceEntry.setNumber(
+            Units.inches_to_meters(periodicInput.visionResult.targetDistance));
+        cameraLatencyEntry.setNumber(periodicInput.visionResult.latency);
+      }
     }
   }
 }
