@@ -15,11 +15,10 @@ import java.util.List;
 
 public class TrajectoryGenerator {
   public static final class TrajectoryGeneratorConfig {
-    public static final double MAX_DELTA_X = 2.0; // inch
-    public static final double MAX_DELTA_Y = 0.25; // inch
+    public static final double MAX_DELTA_X = 0.0508; // meter
+    public static final double MAX_DELTA_Y = 0.00635; // meter
     public static final double MAX_DELTA_THETA = Math.toRadians(5.0); // rad
-
-    public static final double MAX_ABS_ACCEL = 120.0; // inch/s^2
+    public static final double MAX_ABS_ACCEL = 3.048; // meter/s^2
   }
 
   /**

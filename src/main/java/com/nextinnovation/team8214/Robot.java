@@ -194,5 +194,6 @@ public class Robot extends TimedRobot {
     controlLooper.logToSmartDashboard();
     controlSignalManager.logToSmartDashBoard();
     vision.logToSmartDashboard();
+    odometerFusingManager.logToSmartDashBoard();
   }
 }

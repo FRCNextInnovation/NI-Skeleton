@@ -49,8 +49,8 @@ public class SetTrajectoryAction extends BaseAction {
       Translation2d lastTargetTranslation =
           trajectory.getLastState().state().getPose().getTranslation();
 
-      if (Util.epsilonEquals(currentTranslation.x(), lastTargetTranslation.x(), 40.0)
-          && Util.epsilonEquals(currentTranslation.y(), lastTargetTranslation.y(), 30.0)) {
+      if (Util.epsilonEquals(currentTranslation.x(), lastTargetTranslation.x(), 0.5)
+          && Util.epsilonEquals(currentTranslation.y(), lastTargetTranslation.y(), 0.3)) {
         swerve.setState(SwerveState.DISABLE);
         return true;
       } else {

@@ -1,7 +1,6 @@
 package com.nextinnovation.team8214.auto;
 
 import com.nextinnovation.lib.auto.modes.BaseAutoMode;
-import com.nextinnovation.team8214.auto.modes.Bottom5Balls;
 import com.nextinnovation.team8214.auto.modes.Silence;
 import com.nextinnovation.team8214.auto.modes.Top2Balls;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -30,7 +29,6 @@ public class AutoModeChooser {
 
   public enum AutoOption {
     SILENCE("Silence"),
-    BOTTOM_5_BALLS("Bottom5Balls"),
     TOP_2_BALLS("Top2Balls");
 
     public final String name;
@@ -40,7 +38,7 @@ public class AutoModeChooser {
     }
   }
 
-  private static final AutoOption DEFAULT_MODE = AutoOption.BOTTOM_5_BALLS;
+  private static final AutoOption DEFAULT_MODE = AutoOption.TOP_2_BALLS;
   private static final Alliance DEFAULT_ALLIANCE = Alliance.RED;
   private final SendableChooser<AutoOption> modeChooser;
   private final SendableChooser<Alliance> allianceChooser;
@@ -52,7 +50,6 @@ public class AutoModeChooser {
     modeChooser = new SendableChooser<>();
     modeChooser.setDefaultOption(DEFAULT_MODE.name, DEFAULT_MODE);
     modeChooser.addOption(AutoOption.SILENCE.name, AutoOption.SILENCE);
-    modeChooser.addOption(AutoOption.TOP_2_BALLS.name, AutoOption.TOP_2_BALLS);
 
     // Alliance Chooser
     allianceChooser = new SendableChooser<>();
@@ -76,8 +73,6 @@ public class AutoModeChooser {
     switch (option) {
       case SILENCE:
         return new Silence();
-      case BOTTOM_5_BALLS:
-        return new Bottom5Balls();
       case TOP_2_BALLS:
         return new Top2Balls();
       default:
@@ -88,10 +83,6 @@ public class AutoModeChooser {
 
   public boolean isAllianceRed() {
     return selectedAlliance == Alliance.RED;
-  }
-
-  public boolean isStandardCarpetSide() {
-    return selectedAlliance == Alliance.BLUE;
   }
 
   public void logToSmartDashboard() {

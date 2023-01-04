@@ -10,12 +10,11 @@ import com.ctre.phoenix.sensors.SensorInitializationStrategy;
 import com.ctre.phoenix.sensors.SensorVelocityMeasPeriod;
 import com.nextinnovation.lib.drivers.LazyTalonFX;
 import com.nextinnovation.lib.drivers.TalonUtil;
-import com.nextinnovation.lib.geometry.Pose2d;
 import com.nextinnovation.lib.geometry.Rotation2d;
-import com.nextinnovation.lib.geometry.Translation2d;
 import com.nextinnovation.lib.subsystems.BaseSubsystem;
 import com.nextinnovation.lib.utils.Util;
 import com.nextinnovation.team8214.Config;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.Timer;
 
 public class SwerveDriveModule extends BaseSubsystem {
@@ -73,18 +72,11 @@ public class SwerveDriveModule extends BaseSubsystem {
   private final LazyTalonFX translationMotor, rotationMotor;
 
   private final String moduleName;
-  private Pose2d estimatedRobotPose = new Pose2d();
-  private Translation2d modulePosition;
   private final int rotationCalibrationOffset;
   private final double translationKs;
-  private boolean isStandardCarpetSide = false;
-  private final Translation2d modulePositionToTranslationCenter;
   private final PeriodicInput periodicInput = new PeriodicInput();
   private final PeriodicOutput periodicOutput = new PeriodicOutput();
   private final CANCoder externalRotationEncoder;
-
-  private int resetIteration = 0;
-
   /**
    * Constructor
    *
@@ -94,7 +86,6 @@ public class SwerveDriveModule extends BaseSubsystem {
    * @param external_rotation_encoder_id CAN ID of CANCoder
    * @param rotation_calibration_offset Calibration offset by CANCoder
    * @param translation_ks Compensated ks for translation motor open loop
-   * @param module_position_to_robot_centric Module position related to robot centric in inch
    */
   public SwerveDriveModule(
       int module_id,
@@ -102,16 +93,14 @@ public class SwerveDriveModule extends BaseSubsystem {
       int rotation_motor_id,
       int external_rotation_encoder_id,
       int rotation_calibration_offset,
-      double translation_ks,
-      Translation2d module_position_to_robot_centric) {
+      double translation_ks) {
     moduleName = "Swerve Module " + module_id + " ";
     translationMotor = new LazyTalonFX(translation_motor_id);
     rotationMotor = new LazyTalonFX(rotation_motor_id);
     externalRotationEncoder = new CANCoder(external_rotation_encoder_id);
     rotationCalibrationOffset = rotation_calibration_offset;
     translationKs = translation_ks;
-    modulePositionToTranslationCenter = module_position_to_robot_centric;
-    // configExternalRotationSensor();
+    configExternalRotationSensor();
     configTranslationMotor();
     configRotationMotor();
     calibrateRotationEncoder();
@@ -125,16 +114,14 @@ public class SwerveDriveModule extends BaseSubsystem {
       int translation_motor_id,
       int rotation_motor_id,
       int external_rotation_encoder_id,
-      int rotation_calibration_offset,
-      Translation2d module_position_to_robot_centric) {
+      int rotation_calibration_offset) {
     this(
         module_id,
         translation_motor_id,
         rotation_motor_id,
         external_rotation_encoder_id,
         rotation_calibration_offset,
-        0.0,
-        module_position_to_robot_centric);
+        0.0);
   }
 
   private synchronized void configExternalRotationSensor() {
@@ -264,14 +251,9 @@ public class SwerveDriveModule extends BaseSubsystem {
   /************************************************************************************************
    * Reset *
    ************************************************************************************************/
-  public synchronized void resetModulePosition() {
-    setModulePosition(modulePositionToTranslationCenter);
-  }
-
   @Override
   public synchronized void resetSensors() {
     translationMotor.setSelectedSensorPosition(0, 0, Config.CAN_TIMEOUT_MS);
-    resetModulePosition();
   }
 
   /************************************************************************************************
@@ -288,27 +270,14 @@ public class SwerveDriveModule extends BaseSubsystem {
   /************************************************************************************************
    * Getter & Setter *
    ************************************************************************************************/
-  public synchronized void setIsStandardCarpetSide(boolean is_standard_carpet_side) {
-    isStandardCarpetSide = is_standard_carpet_side;
-  }
-
-  private double getTranslationDisplacement() {
-    return translationEncoderUnitsToInches(periodicInput.translationMotorEncoderPosition);
-  }
-
-  private double getPreviousTranslationDisplacement() {
-    return translationEncoderUnitsToInches(periodicInput.previousTranslationMotorEncoderPosition);
-  }
-
   public double getTranslationVelocity() {
-    return translationEncoderVelocityToInchesPerSecond(
+    return translationEncoderVelocityToMetersPerSecond(
         periodicInput.translationMotorEncoderVelocity);
   }
 
-  public synchronized void setTranslationVelocityTarget(double velocity_inches_per_second) {
+  public synchronized void setTranslationVelocityTarget(double velocity_encoder_units_per_second) {
     periodicOutput.translationMotorControlMode = ControlMode.Velocity;
-    periodicOutput.translationMotorSetpoint =
-        inchesPerSecondToTranslationEncoderVelocity(velocity_inches_per_second);
+    periodicOutput.translationMotorSetpoint = velocity_encoder_units_per_second;
   }
 
   public synchronized void setNormalizedTranslationVelocityTarget(double normalized_velocity) {
@@ -321,17 +290,6 @@ public class SwerveDriveModule extends BaseSubsystem {
     periodicOutput.translationMotorSetpoint = normalized_output;
   }
 
-  public boolean isTranslationVelocityOnTarget() {
-    if (periodicOutput.translationMotorControlMode == ControlMode.Velocity) {
-      return Util.epsilonEquals(
-          periodicOutput.translationMotorSetpoint,
-          periodicInput.translationMotorEncoderVelocity,
-          inchesPerSecondToTranslationEncoderVelocity(
-              SwerveDriveModuleConfig.Translation.SPEED_ON_TARGET_ERROR_TOLERANCE));
-    }
-    return false;
-  }
-
   private double getRawRotationHeading() {
     return rotationEncoderUnitsToDegrees(periodicInput.rotationMotorEncoderPosition);
   }
@@ -339,10 +297,6 @@ public class SwerveDriveModule extends BaseSubsystem {
   public Rotation2d getRobotCentricRotationHeading() {
     return Rotation2d.fromDegrees(
         getRawRotationHeading() - rotationEncoderUnitsToDegrees(rotationCalibrationOffset));
-  }
-
-  public Rotation2d getFieldCentricRotationHeading(Rotation2d robot_heading) {
-    return getRobotCentricRotationHeading().rotateBy(robot_heading);
   }
 
   private void setRotationHeadingTarget(double heading_degrees) {
@@ -356,17 +310,6 @@ public class SwerveDriveModule extends BaseSubsystem {
 
   public synchronized void setRotationHeadingTarget(Rotation2d heading) {
     setRotationHeadingTarget(heading.getUnboundedDegrees());
-  }
-
-  public boolean isRotationHeadingOnTarget() {
-    if (periodicOutput.rotationMotorControlMode == ControlMode.Position) {
-      return Util.epsilonEquals(
-          periodicOutput.rotationMotorSetpoint,
-          periodicInput.rotationMotorEncoderPosition,
-          degreesToRotationEncoderUnits(
-              SwerveDriveModuleConfig.Rotation.HEADING_ON_TARGET_ERROR_TOLERANCE));
-    }
-    return false;
   }
 
   public synchronized void setRotationOpenLoop(double normalized_output) {
@@ -390,83 +333,22 @@ public class SwerveDriveModule extends BaseSubsystem {
             SwerveDriveModuleConfig.Rotation.ENCODER_UNITS_PER_MODULE_BASE_REVOLUTION));
   }
 
-  public Translation2d getModulePosition() {
-    return modulePosition;
-  }
-
-  public Pose2d getEstimatedRobotPose() {
-    return estimatedRobotPose;
-  }
-
-  public synchronized void setModulePosition(Translation2d module_position) {
-    this.modulePosition = module_position;
-  }
-
-  public synchronized void setModulePositionFromRobotPose(Pose2d robot_pose) {
-    setModulePosition(
-        robot_pose
-            .transformBy(Pose2d.fromTranslation(modulePositionToTranslationCenter))
-            .getTranslation());
-    estimatedRobotPose = robot_pose;
-  }
-
-  /************************************************************************************************
-   * Update *
-   ************************************************************************************************/
-  public synchronized void updateOdometer(Rotation2d robot_heading) {
-    double deltaEncoderPosition =
-        getTranslationDisplacement() - getPreviousTranslationDisplacement();
-    Rotation2d rotationHeading = getFieldCentricRotationHeading(robot_heading);
-    double deltaTranslationX = rotationHeading.cos() * deltaEncoderPosition;
-    double deltaTranslationY = rotationHeading.sin() * deltaEncoderPosition;
-
-    if (SwerveDriveModuleConfig.ENABLE_SCRUB_FACTOR) {
-      if (Math.signum(deltaTranslationX) > 0.0) {
-        if (isStandardCarpetSide) {
-          deltaTranslationX *= 1.0 / SwerveDriveModuleConfig.X_SCRUB_FACTOR;
-        }
-      } else {
-        if (isStandardCarpetSide) {
-          deltaTranslationX *= Math.pow(SwerveDriveModuleConfig.X_SCRUB_FACTOR, 2.0);
-        }
-      }
-      if (Math.signum(deltaTranslationY) > 0.0) {
-        if (isStandardCarpetSide) {
-          deltaTranslationY *= 1.0 / SwerveDriveModuleConfig.Y_SCRUB_FACTOR;
-        }
-      } else {
-        if (isStandardCarpetSide) {
-          deltaTranslationY *= Math.pow(SwerveDriveModuleConfig.Y_SCRUB_FACTOR, 2.0);
-        }
-      }
-    }
-
-    Translation2d deltaTranslation = new Translation2d(deltaTranslationX, deltaTranslationY);
-
-    modulePosition = modulePosition.translateBy(deltaTranslation);
-    estimatedRobotPose =
-        new Pose2d(modulePosition, robot_heading)
-            .transformBy(Pose2d.fromTranslation(modulePositionToTranslationCenter.inverse()));
-    synchronizePreviousTranslationEncoderPosition();
+  public SwerveModuleState getWpilibModuleState() {
+    return new SwerveModuleState(
+        getTranslationVelocity(),
+        edu.wpi.first.math.geometry.Rotation2d.fromDegrees(
+            getRobotCentricRotationHeading().getUnboundedDegrees()));
   }
 
   /************************************************************************************************
    * Util *
    ************************************************************************************************/
-  private double translationEncoderUnitsToInches(double encoder_units) {
-    return encoder_units / SwerveDriveModuleConfig.Translation.ENCODER_UNITS_PER_INCH;
+  private double translationEncoderUnitsToMeters(double encoder_units) {
+    return encoder_units / SwerveDriveModuleConfig.Translation.ENCODER_UNITS_PER_METER;
   }
 
-  private int inchesToTranslationEncoderUnits(double inches) {
-    return Util.roundToInt(inches * SwerveDriveModuleConfig.Translation.ENCODER_UNITS_PER_INCH);
-  }
-
-  private double translationEncoderVelocityToInchesPerSecond(double encoder_units_per_100ms) {
-    return translationEncoderUnitsToInches(encoder_units_per_100ms) * 10.0;
-  }
-
-  private int inchesPerSecondToTranslationEncoderVelocity(double inches_per_second) {
-    return Util.roundToInt(inchesToTranslationEncoderUnits(inches_per_second / 10.0));
+  private double translationEncoderVelocityToMetersPerSecond(double encoder_units_per_100ms) {
+    return translationEncoderUnitsToMeters(encoder_units_per_100ms) * 10.0;
   }
 
   private int degreesToRotationEncoderUnits(double degrees) {
@@ -475,12 +357,6 @@ public class SwerveDriveModule extends BaseSubsystem {
 
   private double rotationEncoderUnitsToDegrees(double encoder_units) {
     return encoder_units / SwerveDriveModuleConfig.Rotation.ENCODER_UNITS_PER_DEGREE;
-  }
-
-  private double rotationEncoderVelocityToRadPerSecond(double encoder_units_per_100ms) {
-    return encoder_units_per_100ms
-        * 10.0
-        / SwerveDriveModuleConfig.Rotation.ENCODER_UNITS_PER_DEGREE;
   }
 
   /************************************************************************************************
@@ -497,27 +373,4 @@ public class SwerveDriveModule extends BaseSubsystem {
    ************************************************************************************************/
   @Override
   public void logToSmartDashboard() {}
-
-  private boolean testTranslationMotorCalibration() {
-    return translationMotor.getInverted() == SwerveDriveModuleConfig.Translation.IS_INVERT
-        && Util.epsilonEquals(
-            translationMotor.getSelectedSensorPosition(),
-            0.0,
-            inchesToTranslationEncoderUnits(
-                SwerveDriveModuleConfig.Translation.DISTANCE_ON_TARGET_ERROR_TOLERANCE));
-  }
-
-  private boolean testRotationMotorCalibration() {
-    return rotationMotor.getInverted() == SwerveDriveModuleConfig.Rotation.IS_INVERT
-        && Util.epsilonEquals(
-            rotationMotor.getSelectedSensorPosition(),
-            getRotationEncoderCalibrationTarget(),
-            degreesToRotationEncoderUnits(
-                SwerveDriveModuleConfig.Rotation.HEADING_ON_TARGET_ERROR_TOLERANCE));
-  }
-
-  @Override
-  public boolean selfTest() {
-    return testTranslationMotorCalibration() && testRotationMotorCalibration();
-  }
 }

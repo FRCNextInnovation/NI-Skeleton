@@ -12,13 +12,12 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class DriveMotionPlanner {
   public enum FollowerType {
-    ADAPTIVE_PURE_PURSUIT,
-    RAMSETE
+    ADAPTIVE_PURE_PURSUIT
   }
 
   private final double minLookaheadTimeSecs;
-  private final double minLookaheadDistanceInches;
-  private final double chassisMaxVelocityInchesPerSecond;
+  private final double minLookaheadDistanceMeters;
+  private final double chassisMaxVelocityMetersPerSecond;
   private final FollowerType followerType;
   private boolean isReversed = false;
   private boolean useDefaultCook = true;
@@ -34,20 +33,20 @@ public class DriveMotionPlanner {
    * Constructor of DriveMotionPlanner
    *
    * @param min_lookahead_time_secs Min lookahead time in seconds
-   * @param min_lookahead_distance_inches Min chassis lookahead distance in inches
-   * @param chassis_max_velocity_inches_per_second chassis max velocity in inch/s
+   * @param min_lookahead_distance_meters Min chassis lookahead distance in meters
+   * @param chassis_max_velocity_meters_per_second chassis max velocity in meter/s
    * @param min_normalized_drive_speed Min normalized follow speed
    * @param follower_type Type of follower(PID, Pure Pursuit...)
    */
   public DriveMotionPlanner(
       double min_lookahead_time_secs,
-      double min_lookahead_distance_inches,
-      double chassis_max_velocity_inches_per_second,
+      double min_lookahead_distance_meters,
+      double chassis_max_velocity_meters_per_second,
       double min_normalized_drive_speed,
       FollowerType follower_type) {
     minLookaheadTimeSecs = min_lookahead_time_secs;
-    minLookaheadDistanceInches = min_lookahead_distance_inches;
-    chassisMaxVelocityInchesPerSecond = chassis_max_velocity_inches_per_second;
+    minLookaheadDistanceMeters = min_lookahead_distance_meters;
+    chassisMaxVelocityMetersPerSecond = chassis_max_velocity_meters_per_second;
     defaultCook = min_normalized_drive_speed;
     followerType = follower_type;
   }
@@ -148,7 +147,7 @@ public class DriveMotionPlanner {
    */
   private Translation2d updateAdaptivePurePursuit(Pose2d current_state) {
     double lookaheadTime = minLookaheadTimeSecs;
-    final double minLookaheadDistance = minLookaheadDistanceInches;
+    final double minLookaheadDistance = minLookaheadDistanceMeters;
     final double lookaheadAdaptiveDeltaTime = 0.01;
 
     TimedState<Pose2dWithCurvature> lookaheadState =
@@ -186,7 +185,7 @@ public class DriveMotionPlanner {
         new Translation2d(current_state.getTranslation(), lookaheadState.state().getTranslation());
 
     Rotation2d steeringDirection = lookaheadTranslation.direction();
-    double normalizedSpeed = Math.abs(setpoint.velocity()) / chassisMaxVelocityInchesPerSecond;
+    double normalizedSpeed = Math.abs(setpoint.velocity()) / chassisMaxVelocityMetersPerSecond;
 
     if (normalizedSpeed > defaultCook || setpoint.t() > (currentTrajectoryLength / 2.0)) {
       useDefaultCook = false;
@@ -242,8 +241,6 @@ public class DriveMotionPlanner {
       switch (followerType) {
         case ADAPTIVE_PURE_PURSUIT:
           output = updateAdaptivePurePursuit(current_state);
-          break;
-        case RAMSETE:
           break;
       }
     } else {

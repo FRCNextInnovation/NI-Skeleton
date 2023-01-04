@@ -7,7 +7,6 @@ import com.nextinnovation.lib.geometry.Pose2dWithCurvature;
 import com.nextinnovation.lib.geometry.Rotation2d;
 import com.nextinnovation.lib.geometry.Translation2d;
 import com.nextinnovation.lib.kinematics.SwerveInverseKinematics;
-import com.nextinnovation.lib.kinematics.SwerveKinematics;
 import com.nextinnovation.lib.loops.ILoop;
 import com.nextinnovation.lib.loops.ILooper;
 import com.nextinnovation.lib.planners.DriveMotionPlanner;
@@ -24,7 +23,6 @@ import com.nextinnovation.team8214.devices.ahrs.BaseAhrs;
 import com.nextinnovation.team8214.managers.ControlSignalManager;
 import com.nextinnovation.team8214.managers.OdometerFusingManager;
 import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 
@@ -47,13 +45,13 @@ public class Swerve extends BaseSubsystem {
 
           @Override
           public void onLoop(double timestamp) {
-            updateOdometer(timestamp);
+            updateOdometer();
 
             switch (swerveState) {
               case MANUAL:
-                Translation2d translationalInput =
+                var translationalInput =
                     ControlSignalManager.getInstance().getSwerveManualTranslation();
-                double rotationalInput =
+                var rotationalInput =
                     ControlSignalManager.getInstance().getSwerveManualRotationMagnitude();
 
                 if (Util.epsilonEquals(rotationalInput, 0.0)) {
@@ -71,16 +69,15 @@ public class Swerve extends BaseSubsystem {
 
               case TRAJECTORY:
                 if (!driveMotionPlanner.isDone() || !thetaPIDController.onTarget()) {
-                  Translation2d translationalTrajectoryInput = driveMotionPlanner.update(getPose());
-
-                  double rotationTrajectoryInput =
+                  var translationalTrajectoryInput = driveMotionPlanner.update(getPose());
+                  var rotationTrajectoryInput =
                       thetaPIDController.calculate(
                           Util.boundAngleTo0To360Degrees(getFieldCentricHeading().getDegrees()),
                           timestamp);
 
                   if (Util.epsilonEquals(rotationTrajectoryInput, 0.0)) {
                     if (!isHeadingControllerEnabled()
-                            && Math.abs(getAngularVelocity().getUnboundedDegrees()) <= 5.625) {
+                        && Math.abs(getAngularVelocity().getUnboundedDegrees()) <= 5.625) {
                       setTargetHeadingToCurrentHeading();
                       enableHeadingController();
                     }
@@ -149,7 +146,7 @@ public class Swerve extends BaseSubsystem {
         disableModules();
         break;
       case TRAJECTORY:
-        configHeadingController(0.3, 0.0, 0.1, 5.0);
+        configHeadingController(0.375, 0.0, 0.01, 1.0 / 9.0);
         enableHeadingController();
         thetaPIDController.enable();
         break;
@@ -177,8 +174,6 @@ public class Swerve extends BaseSubsystem {
   private final SwerveInverseKinematics inverseKinematics =
       new SwerveInverseKinematics(
           SwerveConfig.MODULE_COUNT, SwerveConfig.POSITIONS_RELATIVE_TO_DRIVE_CENTER);
-  private final SwerveKinematics kinematics =
-      new SwerveKinematics(SwerveConfig.WHEEL_ODOMETER_MAX_DELTA_INCH);
   private final HeadingController headingController = new HeadingController();
   private final TranslationAxisController thetaPIDController =
       new TranslationAxisController(0.0017, 0.0, 0.006, 3.0);
@@ -187,14 +182,13 @@ public class Swerve extends BaseSubsystem {
   private final SwerveDriveModule rearLeftModule;
   private final SwerveDriveModule rearRightModule;
   private final List<SwerveDriveModule> modules;
-  private final List<SwerveDriveModule> odometerModules;
   private final OdometerFusingManager odometerFusingManager = OdometerFusingManager.getInstance();
   private DriveMotionPlanner driveMotionPlanner =
       new DriveMotionPlanner(
           0.25,
-          6.0,
-          SwerveConfig.MAX_SPEED_INCHES_PER_SECOND,
-          0.3,
+          0.1524,
+          SwerveConfig.MAX_SPEED_METERS_PER_SECOND,
+          0.15,
           DriveMotionPlanner.FollowerType.ADAPTIVE_PURE_PURSUIT);
 
   //  private final BaseAhrs ahrs = AhrsPigeon.getInstance();
@@ -208,35 +202,30 @@ public class Swerve extends BaseSubsystem {
             Ports.Can.FRONT_LEFT_DRIVE_MOTOR,
             Ports.Can.FRONT_LEFT_ROTATION_MOTOR,
             Ports.Can.FRONT_LEFT_ROTATION_SENSOR,
-            SwerveConfig.FRONT_LEFT_CALIBRATION_OFFSET,
-            SwerveConfig.FRONT_LEFT_MODULE_POSITION_RELATIVE_TO_DRIVE_CENTER);
+            SwerveConfig.FRONT_LEFT_CALIBRATION_OFFSET);
     rearLeftModule =
         new SwerveDriveModule(
             1,
             Ports.Can.REAR_LEFT_DRIVE_MOTOR,
             Ports.Can.REAR_LEFT_ROTATION_MOTOR,
             Ports.Can.REAR_LEFT_ROTATION_SENSOR,
-            SwerveConfig.REAR_LEFT_CALIBRATION_OFFSET,
-            SwerveConfig.REAR_LEFT_MODULE_POSITION_RELATIVE_TO_DRIVE_CENTER);
+            SwerveConfig.REAR_LEFT_CALIBRATION_OFFSET);
     rearRightModule =
         new SwerveDriveModule(
             2,
             Ports.Can.REAR_RIGHT_DRIVE_MOTOR,
             Ports.Can.REAR_RIGHT_ROTATION_MOTOR,
             Ports.Can.REAR_RIGHT_ROTATION_SENSOR,
-            SwerveConfig.REAR_RIGHT_CALIBRATION_OFFSET,
-            SwerveConfig.REAR_RIGHT_MODULE_POSITION_RELATIVE_TO_DRIVE_CENTER);
+            SwerveConfig.REAR_RIGHT_CALIBRATION_OFFSET);
     frontRightModule =
         new SwerveDriveModule(
             3,
             Ports.Can.FRONT_RIGHT_DRIVE_MOTOR,
             Ports.Can.FRONT_RIGHT_ROTATION_MOTOR,
             Ports.Can.FRONT_RIGHT_ROTATION_SENSOR,
-            SwerveConfig.FRONT_RIGHT_CALIBRATION_OFFSET,
-            SwerveConfig.FRONT_RIGHT_MODULE_POSITION_RELATIVE_TO_DRIVE_CENTER);
+            SwerveConfig.FRONT_RIGHT_CALIBRATION_OFFSET);
 
     modules = Arrays.asList(frontLeftModule, rearLeftModule, rearRightModule, frontRightModule);
-    odometerModules = modules;
 
     configSmartDashboard();
     configModules();
@@ -259,8 +248,6 @@ public class Swerve extends BaseSubsystem {
    ************************************************************************************************/
   public synchronized void resetPose() {
     setPose(startingPose);
-    odometerFusingManager.reset(Timer.getFPGATimestamp(), startingPose);
-    kinematics.resetTotalDistance();
   }
 
   @Override
@@ -282,10 +269,6 @@ public class Swerve extends BaseSubsystem {
   /************************************************************************************************
    * Getter & Setter *
    ************************************************************************************************/
-  public synchronized void setIsStandardCarpetSide(boolean is_standard_carpet_side) {
-    modules.forEach(s -> s.setIsStandardCarpetSide(is_standard_carpet_side));
-  }
-
   public Rotation2d getTargetHeading() {
     return headingController.getTargetHeading();
   }
@@ -299,16 +282,11 @@ public class Swerve extends BaseSubsystem {
   }
 
   public synchronized void setPose(Pose2d pose) {
-    kinematics.setPose(pose);
-    modules.forEach((module) -> module.setModulePositionFromRobotPose(pose));
+    odometerFusingManager.setPose(pose, getFieldCentricHeading());
   }
 
   public void setStartingPose(Pose2d pose) {
     startingPose = pose;
-  }
-
-  public Translation2d getVelocity() {
-    return kinematics.getVelocity();
   }
 
   public Rotation2d getAngularVelocity() {
@@ -341,8 +319,9 @@ public class Swerve extends BaseSubsystem {
   private synchronized void setNormalizedModuleVelocityTargets(
       List<Translation2d> module_velocities, boolean enable_closed_loop_control) {
     for (int i = 0; i < modules.size(); i++) {
-      SwerveDriveModule module = modules.get(i);
-      Translation2d moduleVelocity = module_velocities.get(i);
+      var module = modules.get(i);
+      var moduleVelocity = module_velocities.get(i);
+
       if (Util.shouldReverseRotation(
           module_velocities.get(i).direction().getDegrees(),
           modules.get(i).getRobotCentricRotationHeading().getDegrees())) {
@@ -375,9 +354,9 @@ public class Swerve extends BaseSubsystem {
     driveMotionPlanner =
         new DriveMotionPlanner(
             0.25,
-            6.0,
-            SwerveConfig.MAX_SPEED_INCHES_PER_SECOND,
-            0.3,
+            0.1524,
+            SwerveConfig.MAX_SPEED_METERS_PER_SECOND,
+            0.15,
             DriveMotionPlanner.FollowerType.ADAPTIVE_PURE_PURSUIT);
     setState(SwerveState.TRAJECTORY);
     setTargetHeading(target_heading);
@@ -423,29 +402,16 @@ public class Swerve extends BaseSubsystem {
     }
   }
 
-  public boolean isModuleHeadingsOnTarget() {
-    for (SwerveDriveModule module : modules) {
-      if (!module.isRotationHeadingOnTarget()) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   /************************************************************************************************
    * Update *
    ************************************************************************************************/
-  public synchronized void updateOdometer(double timestamp) {
-    List<Pose2d> moduleEstimatedRobotPoses = new ArrayList<>();
-    for (SwerveDriveModule module : odometerModules) {
-      module.updateOdometer(periodicInput.ahrsHeading);
-      moduleEstimatedRobotPoses.add(module.getEstimatedRobotPose());
-    }
-    kinematics.update(moduleEstimatedRobotPoses, periodicInput.ahrsHeading, timestamp);
-    odometerFusingManager.addChassisWODeltaTranslationMap(
-        timestamp, kinematics.getDeltaPosition(), periodicInput.ahrsHeading);
-    odometerModules.forEach(
-        (module) -> module.setModulePositionFromRobotPose(kinematics.getPose()));
+  public synchronized void updateOdometer() {
+    odometerFusingManager.updateWO(
+        getFieldCentricHeading(),
+        modules.get(0).getWpilibModuleState(),
+        modules.get(1).getWpilibModuleState(),
+        modules.get(2).getWpilibModuleState(),
+        modules.get(3).getWpilibModuleState());
   }
 
   /**
@@ -468,6 +434,7 @@ public class Swerve extends BaseSubsystem {
             getFieldCentricHeading()),
         enable_closed_loop_Control);
   }
+
   /************************************************************************************************
    * Stop & Disable Actions *
    ************************************************************************************************/
@@ -487,12 +454,15 @@ public class Swerve extends BaseSubsystem {
 
   private NetworkTableEntry swerveStateEntry;
   private NetworkTableEntry isHeadingControllerEnabledEntry;
+  private NetworkTableEntry targetHeadingEntry;
+  private NetworkTableEntry isHeadingOnTargetEntry;
 
   public void configSmartDashboard() {
     tab = Shuffleboard.getTab("Swerve");
-
     swerveStateEntry = tab.add("Swerve State", "None").getEntry();
     isHeadingControllerEnabledEntry = tab.add("Is HeadingController Enabled", false).getEntry();
+    targetHeadingEntry = tab.add("Target Heading", 0.0).getEntry();
+    isHeadingOnTargetEntry = tab.add("Is Heading On Target", false).getEntry();
   }
 
   @Override
@@ -500,6 +470,8 @@ public class Swerve extends BaseSubsystem {
     if (Config.ENABLE_DEBUG_OUTPUT) {
       swerveStateEntry.setString(swerveState.value);
       isHeadingControllerEnabledEntry.setBoolean(isHeadingControllerEnabled());
+      targetHeadingEntry.setNumber(getTargetHeading().getDegrees());
+      isHeadingOnTargetEntry.setBoolean(isHeadingOnTarget());
 
       modules.forEach(SwerveDriveModule::logToSmartDashboard);
     }

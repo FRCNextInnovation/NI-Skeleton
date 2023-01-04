@@ -5,11 +5,10 @@ import com.nextinnovation.lib.utils.Util;
 /** Final class to store all constants except ID. */
 public final class Config {
   // Robot Physical Dimensions (including bumpers)
-  public static final double ROBOT_WIDTH = 35.98;
-  public static final double ROBOT_LENGTH = 35.51;
+  public static final double ROBOT_WIDTH = 0.913892;
+  public static final double ROBOT_LENGTH = 0.913892;
   public static final double ROBOT_HALF_WIDTH = ROBOT_WIDTH / 2.0;
   public static final double ROBOT_HALF_LENGTH = ROBOT_LENGTH / 2.0;
-  public static final double INTAKE_PUSH_OUT_LENGTH = 4.0;
 
   // AHRS
   public static final double INIT_HEADING = 0.0;
