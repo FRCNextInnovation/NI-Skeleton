@@ -6,7 +6,6 @@ import com.nextinnovation.lib.geometry.Translation2d;
 import com.nextinnovation.lib.loops.ILoop;
 import com.nextinnovation.lib.loops.ILooper;
 import com.nextinnovation.lib.subsystems.BaseSubsystem;
-import com.nextinnovation.lib.utils.Units;
 import com.nextinnovation.team8214.Config;
 import com.nextinnovation.team8214.Field;
 import edu.wpi.first.networktables.NetworkTableEntry;
@@ -53,9 +52,9 @@ public class Vision extends BaseSubsystem {
     synchronized (ioLock) {
       periodicInput.isUpdated = true;
       periodicInput.visionResult = photonVision.getVisionResult();
-      if (!periodicInput.visionResult.hasTarget) {
+      if (periodicInput.visionResult.hasTarget) {
         periodicInput.visionResult.targetDistance =
-            (Field.VISUAL_TARGET_VISUAL_CENTER_HEIGHT - VisionConfig.CAMERA_HEIGHT_INCH)
+            (Field.VISUAL_TARGET_VISUAL_CENTER_HEIGHT - VisionConfig.CAMERA_HEIGHT_METER)
                 / Math.tan(
                     periodicInput.visionResult.targetElevation.getRadians()
                         + VisionConfig.CAMERA_ELEVATION.getRadians());
@@ -201,8 +200,7 @@ public class Vision extends BaseSubsystem {
       if (periodicInput.visionResult.hasTarget) {
         targetOrientationEntry.setNumber(periodicInput.visionResult.targetHeading.getDegrees());
         targetElevationEntry.setNumber(periodicInput.visionResult.targetElevation.getDegrees());
-        fixedDistanceEntry.setNumber(
-            Units.inches_to_meters(periodicInput.visionResult.targetDistance));
+        fixedDistanceEntry.setNumber(periodicInput.visionResult.targetDistance);
         cameraLatencyEntry.setNumber(periodicInput.visionResult.latency);
       }
     }
