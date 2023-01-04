@@ -29,14 +29,10 @@ public final class SwerveConfig {
 
   public static final SwerveDriveKinematics WPILIB_SWERVE_KINEMATICS =
       new SwerveDriveKinematics(
-          new edu.wpi.first.math.geometry.Translation2d(
-              WHEELBASE_HALF_LENGTH_METER, WHEELBASE_HALF_WIDTH_METER),
-          new edu.wpi.first.math.geometry.Translation2d(
-              -WHEELBASE_HALF_LENGTH_METER, WHEELBASE_HALF_WIDTH_METER),
-          new edu.wpi.first.math.geometry.Translation2d(
-              -WHEELBASE_HALF_LENGTH_METER, -WHEELBASE_HALF_WIDTH_METER),
-          new edu.wpi.first.math.geometry.Translation2d(
-              WHEELBASE_HALF_LENGTH_METER, -WHEELBASE_HALF_WIDTH_METER));
+          FRONT_LEFT_MODULE_POSITION_RELATIVE_TO_DRIVE_CENTER.toWpilibTranslation2d(),
+          REAR_LEFT_MODULE_POSITION_RELATIVE_TO_DRIVE_CENTER.toWpilibTranslation2d(),
+          REAR_RIGHT_MODULE_POSITION_RELATIVE_TO_DRIVE_CENTER.toWpilibTranslation2d(),
+          FRONT_RIGHT_MODULE_POSITION_RELATIVE_TO_DRIVE_CENTER.toWpilibTranslation2d());
 
   // Calibration Offsets (calibration encoder values when the wheels are facing 0 degrees)
   // 2022 8214: 10786 17203 5120 1502

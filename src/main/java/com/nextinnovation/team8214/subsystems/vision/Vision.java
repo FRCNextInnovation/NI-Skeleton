@@ -10,7 +10,6 @@ import com.nextinnovation.team8214.Config;
 import com.nextinnovation.team8214.Field;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import org.photonvision.common.hardware.VisionLEDMode;
 
 public class Vision extends BaseSubsystem {
@@ -104,7 +103,6 @@ public class Vision extends BaseSubsystem {
   private final PeriodicInput periodicInput = new PeriodicInput();
 
   private final PhotonVision photonVision = new PhotonVision(VisionConfig.CAMERA_NAME);
-  private boolean isEnabled = false;
 
   private final Object ioLock = new Object();
 
@@ -117,27 +115,20 @@ public class Vision extends BaseSubsystem {
    * Function Enabler *
    ************************************************************************************************/
   private void enable() {
-    isEnabled = true;
     photonVision.setLed(VisionLEDMode.kOn);
   }
 
   private void off() {
-    isEnabled = false;
     photonVision.setLed(VisionLEDMode.kOff);
   }
 
   private void blink() {
-    isEnabled = false;
     photonVision.setLed(VisionLEDMode.kBlink);
   }
 
   /************************************************************************************************
    * Getter & Setter *
    ************************************************************************************************/
-  public boolean isEnabled() {
-    return isEnabled;
-  }
-
   public boolean isUpdated() {
     synchronized (ioLock) {
       if (periodicInput.isUpdated) {
@@ -171,8 +162,6 @@ public class Vision extends BaseSubsystem {
   /************************************************************************************************
    * Log & self-test *
    ************************************************************************************************/
-  private ShuffleboardTab tab;
-
   private NetworkTableEntry visionStateEntry;
   private NetworkTableEntry hasVisionTargetEntry;
   private NetworkTableEntry targetOrientationEntry;
@@ -181,8 +170,7 @@ public class Vision extends BaseSubsystem {
   private NetworkTableEntry cameraLatencyEntry;
 
   public void configSmartDashboard() {
-    tab = Shuffleboard.getTab("Vision");
-
+    var tab = Shuffleboard.getTab("Vision");
     visionStateEntry = tab.add("Vision State", "None").getEntry();
     hasVisionTargetEntry = tab.add("Has Vision Target", false).getEntry();
     targetOrientationEntry = tab.add("Target Orientation", 0.0).getEntry();
@@ -198,10 +186,10 @@ public class Vision extends BaseSubsystem {
       hasVisionTargetEntry.setBoolean(periodicInput.visionResult.hasTarget);
 
       if (periodicInput.visionResult.hasTarget) {
-        targetOrientationEntry.setNumber(periodicInput.visionResult.targetHeading.getDegrees());
-        targetElevationEntry.setNumber(periodicInput.visionResult.targetElevation.getDegrees());
-        fixedDistanceEntry.setNumber(periodicInput.visionResult.targetDistance);
-        cameraLatencyEntry.setNumber(periodicInput.visionResult.latency);
+        targetOrientationEntry.setNumber(getVisionResult().targetHeading.getDegrees());
+        targetElevationEntry.setNumber(getVisionResult().targetElevation.getDegrees());
+        fixedDistanceEntry.setNumber(getVisionResult().targetDistance);
+        cameraLatencyEntry.setNumber(getVisionResult().latency);
       }
     }
   }

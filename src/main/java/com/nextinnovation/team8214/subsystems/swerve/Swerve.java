@@ -24,7 +24,6 @@ import com.nextinnovation.team8214.managers.ControlSignalManager;
 import com.nextinnovation.team8214.managers.OdometerFusingManager;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -450,15 +449,14 @@ public class Swerve extends BaseSubsystem {
   /************************************************************************************************
    * Log & self-test *
    ************************************************************************************************/
-  private ShuffleboardTab tab;
-
   private NetworkTableEntry swerveStateEntry;
+
   private NetworkTableEntry isHeadingControllerEnabledEntry;
   private NetworkTableEntry targetHeadingEntry;
   private NetworkTableEntry isHeadingOnTargetEntry;
 
   public void configSmartDashboard() {
-    tab = Shuffleboard.getTab("Swerve");
+    var tab = Shuffleboard.getTab("Swerve");
     swerveStateEntry = tab.add("Swerve State", "None").getEntry();
     isHeadingControllerEnabledEntry = tab.add("Is HeadingController Enabled", false).getEntry();
     targetHeadingEntry = tab.add("Target Heading", 0.0).getEntry();
@@ -475,14 +473,5 @@ public class Swerve extends BaseSubsystem {
 
       modules.forEach(SwerveDriveModule::logToSmartDashboard);
     }
-  }
-
-  @Override
-  public boolean selfTest() {
-    boolean passesTest = true;
-    for (SwerveDriveModule module : modules) {
-      passesTest &= module.selfTest();
-    }
-    return passesTest;
   }
 }

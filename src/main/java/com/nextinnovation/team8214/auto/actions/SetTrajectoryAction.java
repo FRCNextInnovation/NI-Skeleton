@@ -2,7 +2,6 @@ package com.nextinnovation.team8214.auto.actions;
 
 import com.nextinnovation.lib.auto.actions.BaseAction;
 import com.nextinnovation.lib.geometry.Pose2dWithCurvature;
-import com.nextinnovation.lib.geometry.Translation2d;
 import com.nextinnovation.lib.trajectory.Trajectory;
 import com.nextinnovation.lib.trajectory.timing.TimedState;
 import com.nextinnovation.lib.utils.Util;
@@ -45,9 +44,8 @@ public class SetTrajectoryAction extends BaseAction {
   @Override
   public boolean isFinished() {
     if (isLastTrajectory) {
-      Translation2d currentTranslation = swerve.getPose().getTranslation();
-      Translation2d lastTargetTranslation =
-          trajectory.getLastState().state().getPose().getTranslation();
+      var currentTranslation = swerve.getPose().getTranslation();
+      var lastTargetTranslation = trajectory.getLastState().state().getPose().getTranslation();
 
       if (Util.epsilonEquals(currentTranslation.x(), lastTargetTranslation.x(), 0.5)
           && Util.epsilonEquals(currentTranslation.y(), lastTargetTranslation.y(), 0.3)) {

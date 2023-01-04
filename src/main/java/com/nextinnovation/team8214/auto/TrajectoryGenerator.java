@@ -42,8 +42,8 @@ public class TrajectoryGenerator {
       double max_vel, // inches/s
       double max_abs_accel // inches/s^2
       ) {
-    List<Pose2d> waypointsMaybeFlipped = waypoints;
-    final Pose2d flip = Pose2d.fromRotation(new Rotation2d(-1, 0, false));
+    var waypointsMaybeFlipped = waypoints;
+    final var flip = Pose2d.fromRotation(new Rotation2d(-1, 0, false));
     // TODO re-architect the spline generator to support reverse.
     if (need_reversed) {
       waypointsMaybeFlipped = new ArrayList<>(waypoints.size());
@@ -53,8 +53,7 @@ public class TrajectoryGenerator {
     }
 
     // Create a trajectory from splines.
-    Trajectory<Pose2dWithCurvature> trajectory;
-    trajectory =
+    var trajectory =
         TrajectoryUtil.trajectoryFromSplineWaypoints(
             waypointsMaybeFlipped,
             TrajectoryGeneratorConfig.MAX_DELTA_X,
