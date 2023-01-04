@@ -144,6 +144,15 @@ public class Translation2d implements ITranslation2d<Translation2d> {
     return fmt.format(x_) + "," + fmt.format(y_);
   }
 
+  public edu.wpi.first.math.geometry.Translation2d toWpilibTranslation2d() {
+    return new edu.wpi.first.math.geometry.Translation2d(x_, y_);
+  }
+
+  public static Translation2d fromWpilibTranslation2d(
+      edu.wpi.first.math.geometry.Translation2d translation2d) {
+    return new Translation2d(translation2d.getX(), translation2d.getY());
+  }
+
   public static double dot(final Translation2d a, final Translation2d b) {
     return a.x_ * b.x_ + a.y_ * b.y_;
   }
@@ -246,7 +255,7 @@ public class Translation2d implements ITranslation2d<Translation2d> {
 
   @Override
   public boolean equals(final Object other) {
-    if (other == null || !(other instanceof Translation2d)) return false;
+    if (!(other instanceof Translation2d)) return false;
     return distance((Translation2d) other) < Util.EPSILON_VALUE;
   }
 

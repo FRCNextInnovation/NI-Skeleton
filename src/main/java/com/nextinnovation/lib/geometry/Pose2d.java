@@ -10,7 +10,7 @@ import com.nextinnovation.lib.utils.Util;
 public class Pose2d implements IPose2d<Pose2d> {
   protected static final Pose2d kIdentity = new Pose2d();
 
-  public static final Pose2d identity() {
+  public static Pose2d identity() {
     return kIdentity;
   }
 
@@ -198,6 +198,16 @@ public class Pose2d implements IPose2d<Pose2d> {
     return translation_.toCSV() + "," + rotation_.toCSV();
   }
 
+  public edu.wpi.first.math.geometry.Pose2d toWpilibPose2d() {
+    return new edu.wpi.first.math.geometry.Pose2d(
+        getTranslation().x(), getTranslation().y(), getRotation().toWpilibRotation2d());
+  }
+
+  public static Pose2d fromWpilibPose2d(edu.wpi.first.math.geometry.Pose2d pose2d) {
+    return new Pose2d(
+        pose2d.getX(), pose2d.getY(), Rotation2d.fromWpilibRotation2d(pose2d.getRotation()));
+  }
+
   @Override
   public double distance(final Pose2d other) {
     return Pose2d.log(inverse().transformBy(other)).norm();
@@ -205,7 +215,7 @@ public class Pose2d implements IPose2d<Pose2d> {
 
   @Override
   public boolean equals(final Object other) {
-    if (other == null || !(other instanceof Pose2d)) return false;
+    if (!(other instanceof Pose2d)) return false;
     return epsilonEquals((Pose2d) other, Util.EPSILON_VALUE);
   }
 

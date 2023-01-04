@@ -12,13 +12,13 @@ import java.text.DecimalFormat;
 public class Rotation2d implements IRotation2d<Rotation2d> {
   protected static final Rotation2d kIdentity = new Rotation2d();
 
-  public static final Rotation2d identity() {
+  public static Rotation2d identity() {
     return kIdentity;
   }
 
   protected final double cos_angle_;
   protected final double sin_angle_;
-  protected double theta_degrees = 0;
+  protected double theta_degrees;
   protected double theta_radians = 0;
 
   public Rotation2d() {
@@ -138,8 +138,8 @@ public class Rotation2d implements IRotation2d<Rotation2d> {
    * @return The pole nearest to this rotation.
    */
   public Rotation2d nearestPole() {
-    double pole_sin = 0.0;
-    double pole_cos = 0.0;
+    double pole_sin;
+    double pole_cos;
     if (Math.abs(cos_angle_) > Math.abs(sin_angle_)) {
       pole_cos = Math.signum(cos_angle_);
       pole_sin = 0.0;
@@ -173,6 +173,14 @@ public class Rotation2d implements IRotation2d<Rotation2d> {
     return fmt.format(getDegrees());
   }
 
+  public edu.wpi.first.math.geometry.Rotation2d toWpilibRotation2d() {
+    return edu.wpi.first.math.geometry.Rotation2d.fromDegrees(getUnboundedDegrees());
+  }
+
+  public static Rotation2d fromWpilibRotation2d(edu.wpi.first.math.geometry.Rotation2d rotation2d) {
+    return fromDegrees(rotation2d.getDegrees());
+  }
+
   @Override
   public double distance(final Rotation2d other) {
     return inverse().rotateBy(other).getRadians();
@@ -180,7 +188,7 @@ public class Rotation2d implements IRotation2d<Rotation2d> {
 
   @Override
   public boolean equals(final Object other) {
-    if (other == null || !(other instanceof Rotation2d)) return false;
+    if (!(other instanceof Rotation2d)) return false;
     return distance((Rotation2d) other) < Util.EPSILON_VALUE;
   }
 
