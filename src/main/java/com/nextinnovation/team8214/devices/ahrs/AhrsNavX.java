@@ -23,7 +23,7 @@ public class AhrsNavX extends BaseAhrs {
   }
 
   private void init() {
-    double initTime = Timer.getFPGATimestamp();
+    var initTime = Timer.getFPGATimestamp();
     while (!navx.isConnected()) {
       if (Timer.getFPGATimestamp() - initTime > 4.0) {
         System.out.print("Warning: NavX initialization timed out with ");

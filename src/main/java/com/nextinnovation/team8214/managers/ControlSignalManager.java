@@ -72,19 +72,14 @@ public class ControlSignalManager {
    * Getter & Setter *
    ************************************************************************************************/
   public Translation2d getSwerveManualTranslation() {
-    Translation2d input =
-        Util.applyRemappedCircularDeadband(
-                new Translation2d(-driverController.getRightY(), -driverController.getRightX()),
-                0.09375)
-            .scale(0.75);
-
-    return input;
+    return Util.applyRemappedCircularDeadband(
+            new Translation2d(-driverController.getRightY(), -driverController.getRightX()),
+            0.09375)
+        .scale(0.75);
   }
 
   public double getSwerveManualRotationMagnitude() {
-    double input = Util.applyRemappedDeadband(-driverController.getLeftX(), 0.09375) * 0.27;
-
-    return input;
+    return Util.applyRemappedDeadband(-driverController.getLeftX(), 0.09375) * 0.27;
   }
 
   /************************************************************************************************
