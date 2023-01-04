@@ -45,7 +45,6 @@ public final class SwerveDriveModuleConfig {
     public static final double PID0_KP = 1.0;
     public static final double PID0_KI = 0.0;
     public static final double PID0_KD = 0.1;
-    public static final double PID0_KF = 0.0;
 
     // Mechanical Config
     public static final int ENCODER_RESOLUTION = 2048;
