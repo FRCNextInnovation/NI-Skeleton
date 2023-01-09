@@ -16,17 +16,6 @@ public class AutoModeChooser {
     return instance;
   }
 
-  public enum Alliance {
-    RED("Red"),
-    BLUE("Blue");
-
-    public final String name;
-
-    Alliance(String name) {
-      this.name = name;
-    }
-  }
-
   public enum AutoOption {
     SILENCE("Silence"),
     TOP_2_BALLS("Top2Balls");
@@ -39,11 +28,11 @@ public class AutoModeChooser {
   }
 
   private static final AutoOption DEFAULT_MODE = AutoOption.TOP_2_BALLS;
-  private static final Alliance DEFAULT_ALLIANCE = Alliance.RED;
   private final SendableChooser<AutoOption> modeChooser;
-  private final SendableChooser<Alliance> allianceChooser;
   private AutoOption selectedOption;
-  private Alliance selectedAlliance;
+  private AutoOption lastSelectedOption;
+
+  private BaseAutoMode autoMode;
 
   private AutoModeChooser() {
     // Mode Chooser
@@ -51,22 +40,28 @@ public class AutoModeChooser {
     modeChooser.setDefaultOption(DEFAULT_MODE.name, DEFAULT_MODE);
     modeChooser.addOption(AutoOption.SILENCE.name, AutoOption.SILENCE);
 
-    // Alliance Chooser
-    allianceChooser = new SendableChooser<>();
-    allianceChooser.setDefaultOption(DEFAULT_ALLIANCE.name, DEFAULT_ALLIANCE);
-    allianceChooser.addOption(Alliance.BLUE.name, Alliance.BLUE);
-
     selectedOption = DEFAULT_MODE;
-    selectedAlliance = DEFAULT_ALLIANCE;
+    lastSelectedOption = null;
+    autoMode = null;
   }
 
   public synchronized void updateSelectedAutoMode() {
     selectedOption = modeChooser.getSelected();
-    selectedAlliance = allianceChooser.getSelected();
+
+    if (selectedOption == null) {
+      selectedOption = AutoOption.SILENCE;
+    }
+
+    if (lastSelectedOption != selectedOption) {
+      System.out.println("Auto option selected -> " + selectedOption.name);
+      autoMode = createAutoMode(selectedOption);
+    }
+
+    lastSelectedOption = selectedOption;
   }
 
-  public BaseAutoMode getSelectedAutoMode() {
-    return createAutoMode(selectedOption);
+  public synchronized BaseAutoMode getSelectedAutoMode() {
+    return autoMode;
   }
 
   private BaseAutoMode createAutoMode(AutoOption option) {
@@ -81,14 +76,8 @@ public class AutoModeChooser {
     }
   }
 
-  public boolean isAllianceRed() {
-    return selectedAlliance == Alliance.RED;
-  }
-
   public void logToSmartDashboard() {
     SmartDashboard.putData("Mode Chooser", modeChooser);
-    SmartDashboard.putData("Alliance Chooser", allianceChooser);
-    SmartDashboard.putString("Selected Alliance", selectedAlliance.name);
     SmartDashboard.putString("Selected Auto Mode", selectedOption.name);
   }
 }

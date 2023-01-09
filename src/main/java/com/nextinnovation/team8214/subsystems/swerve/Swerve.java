@@ -20,6 +20,7 @@ import com.nextinnovation.team8214.Config;
 import com.nextinnovation.team8214.Ports;
 import com.nextinnovation.team8214.devices.ahrs.AhrsPigeon2;
 import com.nextinnovation.team8214.devices.ahrs.BaseAhrs;
+import com.nextinnovation.team8214.managers.CancoderManager;
 import com.nextinnovation.team8214.managers.ControlSignalManager;
 import com.nextinnovation.team8214.managers.OdometerFusingManager;
 import edu.wpi.first.networktables.NetworkTableEntry;
@@ -195,33 +196,35 @@ public class Swerve extends BaseSubsystem {
   //  private final BaseAhrs ahrs = AhrsNavX.getInstance();
 
   private Swerve() {
+    var cancoderManager = CancoderManager.getInstance();
+
     frontLeftModule =
         new SwerveDriveModule(
             0,
             Ports.Can.FRONT_LEFT_DRIVE_MOTOR,
             Ports.Can.FRONT_LEFT_ROTATION_MOTOR,
-            Ports.Can.FRONT_LEFT_ROTATION_SENSOR,
+            cancoderManager.getFrontLeft(),
             SwerveConfig.FRONT_LEFT_CALIBRATION_OFFSET);
     rearLeftModule =
         new SwerveDriveModule(
             1,
             Ports.Can.REAR_LEFT_DRIVE_MOTOR,
             Ports.Can.REAR_LEFT_ROTATION_MOTOR,
-            Ports.Can.REAR_LEFT_ROTATION_SENSOR,
+            cancoderManager.getRearLeft(),
             SwerveConfig.REAR_LEFT_CALIBRATION_OFFSET);
     rearRightModule =
         new SwerveDriveModule(
             2,
             Ports.Can.REAR_RIGHT_DRIVE_MOTOR,
             Ports.Can.REAR_RIGHT_ROTATION_MOTOR,
-            Ports.Can.REAR_RIGHT_ROTATION_SENSOR,
+            cancoderManager.getRearRight(),
             SwerveConfig.REAR_RIGHT_CALIBRATION_OFFSET);
     frontRightModule =
         new SwerveDriveModule(
             3,
             Ports.Can.FRONT_RIGHT_DRIVE_MOTOR,
             Ports.Can.FRONT_RIGHT_ROTATION_MOTOR,
-            Ports.Can.FRONT_RIGHT_ROTATION_SENSOR,
+            cancoderManager.getFrontRight(),
             SwerveConfig.FRONT_RIGHT_CALIBRATION_OFFSET);
 
     modules = Arrays.asList(frontLeftModule, rearLeftModule, rearRightModule, frontRightModule);

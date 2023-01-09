@@ -13,13 +13,8 @@ public class LazyTalonFX extends TalonFX {
   private static final int MAX_STATUS_FRAME_PERIOD = 1000;
   private static final int MAX_CONTROL_FRAME_PERIOD = 100;
 
-  public LazyTalonFX(int deviceId) {
-    super(deviceId);
-    configFactoryDefault();
-  }
-
-  public LazyTalonFX(int deviceId, String canBus) {
-    super(deviceId, canBus);
+  public LazyTalonFX(CanId id) {
+    super(id.getNum(), id.getBus());
     configFactoryDefault();
   }
 

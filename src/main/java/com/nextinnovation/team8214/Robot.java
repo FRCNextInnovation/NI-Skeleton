@@ -11,6 +11,7 @@ import com.nextinnovation.team8214.auto.TrajectorySet;
 import com.nextinnovation.team8214.devices.PneumaticCompressor;
 import com.nextinnovation.team8214.devices.VideoFeeder;
 import com.nextinnovation.team8214.devices.ahrs.AhrsPigeon2;
+import com.nextinnovation.team8214.managers.CancoderManager;
 import com.nextinnovation.team8214.managers.ControlSignalManager;
 import com.nextinnovation.team8214.managers.OdometerFusingManager;
 import com.nextinnovation.team8214.subsystems.swerve.Swerve;
@@ -29,6 +30,7 @@ public class Robot extends TimedRobot {
 
   private ControlSignalManager controlSignalManager;
   private OdometerFusingManager odometerFusingManager;
+  private CancoderManager cancoderManager;
   private PneumaticCompressor pneumaticCompressor;
 
   private Vision vision;
@@ -38,6 +40,7 @@ public class Robot extends TimedRobot {
   private void initManagers() {
     controlSignalManager = ControlSignalManager.getInstance();
     odometerFusingManager = OdometerFusingManager.getInstance();
+    cancoderManager = CancoderManager.getInstance();
 
     controlSignalManager.registerEnabledLoops(controlLooper);
   }
@@ -51,7 +54,6 @@ public class Robot extends TimedRobot {
 
   private void initSubsystems() {
     vision = Vision.getInstance();
-
     swerve = Swerve.getInstance();
 
     subsystems = new SubsystemGroup(Arrays.asList(swerve));
@@ -104,7 +106,10 @@ public class Robot extends TimedRobot {
       visionLooper.start();
       controlLooper.start();
 
+      while (autoModeChooser.getSelectedAutoMode() == null)
+        ;
       autoModeExecuter.setAutoMode(autoModeChooser.getSelectedAutoMode());
+
       autoModeExecuter.start();
     } catch (Throwable t) {
       CrashTracker.logThrowableCrash(t);

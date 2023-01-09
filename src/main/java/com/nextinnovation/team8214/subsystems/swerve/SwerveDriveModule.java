@@ -8,6 +8,7 @@ import com.ctre.phoenix.sensors.AbsoluteSensorRange;
 import com.ctre.phoenix.sensors.CANCoder;
 import com.ctre.phoenix.sensors.SensorInitializationStrategy;
 import com.ctre.phoenix.sensors.SensorVelocityMeasPeriod;
+import com.nextinnovation.lib.drivers.CanId;
 import com.nextinnovation.lib.drivers.LazyTalonFX;
 import com.nextinnovation.lib.drivers.TalonUtil;
 import com.nextinnovation.lib.geometry.Rotation2d;
@@ -68,19 +69,19 @@ public class SwerveDriveModule extends BaseSubsystem {
    * @param module_id ID of module:[1, 4], usually FL -> 1, RL -> 2, RR -> 3, FR -> 4
    * @param translation_motor_id CAN ID of translation motor
    * @param rotation_motor_id CAN ID of translation motor
-   * @param external_rotation_encoder_id CAN ID of CANCoder
+   * @param external_rotation_encoder CAN ID of CANCoder
    * @param rotation_calibration_offset Calibration offset by CANCoder
    */
   public SwerveDriveModule(
       int module_id,
-      int translation_motor_id,
-      int rotation_motor_id,
-      int external_rotation_encoder_id,
+      CanId translation_motor_id,
+      CanId rotation_motor_id,
+      CANCoder external_rotation_encoder,
       int rotation_calibration_offset) {
     moduleName = "Swerve Module " + module_id + " ";
     translationMotor = new LazyTalonFX(translation_motor_id);
     rotationMotor = new LazyTalonFX(rotation_motor_id);
-    externalRotationEncoder = new CANCoder(external_rotation_encoder_id);
+    externalRotationEncoder = external_rotation_encoder;
     rotationCalibrationOffset = rotation_calibration_offset;
     configExternalRotationSensor();
     configTranslationMotor();

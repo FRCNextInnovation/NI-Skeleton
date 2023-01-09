@@ -8,8 +8,9 @@ public class Pigeon2 {
   private final int canTimeoutMs;
   private final com.ctre.phoenix.sensors.Pigeon2 pigeon2;
 
-  public Pigeon2(int deviceId, int canTimeoutMs) {
-    pigeon2 = new com.ctre.phoenix.sensors.Pigeon2(deviceId);
+
+  public Pigeon2(CanId id, int canTimeoutMs) {
+    pigeon2 = new com.ctre.phoenix.sensors.Pigeon2(id.getNum(), id.getBus());
     this.canTimeoutMs = canTimeoutMs;
   }
 

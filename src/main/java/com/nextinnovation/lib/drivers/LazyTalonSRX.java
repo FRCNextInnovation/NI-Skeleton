@@ -13,8 +13,8 @@ public class LazyTalonSRX extends TalonSRX {
   private static final int MAX_STATUS_FRAME_PERIOD = 1000;
   private static final int MAX_CONTROL_FRAME_PERIOD = 100;
 
-  public LazyTalonSRX(int deviceId) {
-    super(deviceId);
+  public LazyTalonSRX(CanId id) {
+    super(id.getNum());
     configFactoryDefault();
   }
 
