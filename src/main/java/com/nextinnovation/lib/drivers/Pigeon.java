@@ -10,8 +10,8 @@ public class Pigeon {
   private final int canTimeoutMs;
   private final PigeonIMU pigeon;
 
-  public Pigeon(int deviceId, int canTimeoutMs) {
-    pigeon = new PigeonIMU(deviceId);
+  public Pigeon(CanId deviceId, int canTimeoutMs) {
+    pigeon = new PigeonIMU(deviceId.getNum());
     this.canTimeoutMs = canTimeoutMs;
   }
 
