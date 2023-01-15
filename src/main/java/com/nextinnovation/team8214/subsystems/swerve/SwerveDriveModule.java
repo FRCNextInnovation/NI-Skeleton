@@ -4,9 +4,7 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
-import com.ctre.phoenix.sensors.AbsoluteSensorRange;
 import com.ctre.phoenix.sensors.CANCoder;
-import com.ctre.phoenix.sensors.SensorInitializationStrategy;
 import com.ctre.phoenix.sensors.SensorVelocityMeasPeriod;
 import com.nextinnovation.lib.drivers.CanId;
 import com.nextinnovation.lib.drivers.LazyTalonFX;
@@ -15,7 +13,7 @@ import com.nextinnovation.lib.geometry.Rotation2d;
 import com.nextinnovation.lib.subsystems.BaseSubsystem;
 import com.nextinnovation.lib.utils.Util;
 import com.nextinnovation.team8214.Config;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.wpilibj.Timer;
 
 public class SwerveDriveModule extends BaseSubsystem {
@@ -25,7 +23,8 @@ public class SwerveDriveModule extends BaseSubsystem {
   private static class PeriodicInput {
     public int rotationMotorEncoderPosition = 0;
     public int rotationMotorEncoderVelocity = 0;
-    public int translationMotorEncoderVelocity = 0;
+
+    public int translationMotorEncoderDistance = 0;
   }
 
   @Override
@@ -34,8 +33,9 @@ public class SwerveDriveModule extends BaseSubsystem {
         Util.roundToInt(rotationMotor.getSelectedSensorPosition());
     periodicInput.rotationMotorEncoderVelocity =
         Util.roundToInt(rotationMotor.getSelectedSensorVelocity());
-    periodicInput.translationMotorEncoderVelocity =
-        Util.roundToInt(translationMotor.getSelectedSensorVelocity());
+
+    periodicInput.translationMotorEncoderDistance =
+        Util.roundToInt(translationMotor.getSelectedSensorPosition());
   }
 
   private static class PeriodicOutput {
@@ -83,23 +83,11 @@ public class SwerveDriveModule extends BaseSubsystem {
     rotationMotor = new LazyTalonFX(rotation_motor_id);
     externalRotationEncoder = external_rotation_encoder;
     rotationCalibrationOffset = rotation_calibration_offset;
-    configExternalRotationSensor();
     configTranslationMotor();
     configRotationMotor();
     calibrateRotationEncoder();
     readPeriodicInputs();
     resetSensors();
-  }
-
-  private synchronized void configExternalRotationSensor() {
-    TalonUtil.checkError(
-        externalRotationEncoder.configSensorInitializationStrategy(
-            SensorInitializationStrategy.BootToAbsolutePosition, Config.CAN_TIMEOUT_MS),
-        moduleName + " CANCoder: Can't set initialization strategy!");
-    TalonUtil.checkError(
-        externalRotationEncoder.configAbsoluteSensorRange(
-            AbsoluteSensorRange.Unsigned_0_to_360, Config.CAN_TIMEOUT_MS),
-        moduleName + " CANCoder: Can't set absolute sensor range!");
   }
 
   private synchronized void configTranslationMotor() {
@@ -234,14 +222,13 @@ public class SwerveDriveModule extends BaseSubsystem {
   /************************************************************************************************
    * Getter & Setter *
    ************************************************************************************************/
-  public double getTranslationVelocityMeter() {
-    return translationEncoderVelocityToMetersPerSecond(
-        periodicInput.translationMotorEncoderVelocity);
-  }
-
   private void setTranslationVelocityTarget(double velocity_encoder_units_per_second) {
     periodicOutput.translationMotorControlMode = ControlMode.Velocity;
     periodicOutput.translationMotorSetpoint = velocity_encoder_units_per_second;
+  }
+
+  private double getTranslationDistanceMeter() {
+    return translationEncoderUnitsToMeters(periodicInput.translationMotorEncoderDistance);
   }
 
   public synchronized void setNormalizedTranslationVelocityTarget(double normalized_velocity) {
@@ -297,9 +284,9 @@ public class SwerveDriveModule extends BaseSubsystem {
             SwerveDriveModuleConfig.Rotation.ENCODER_UNITS_PER_MODULE_BASE_REVOLUTION));
   }
 
-  public SwerveModuleState getWpilibModuleState() {
-    return new SwerveModuleState(
-        getTranslationVelocityMeter(), getRobotCentricRotationHeading().toWpilibRotation2d());
+  public SwerveModulePosition getWpilibModuleDistance() {
+    return new SwerveModulePosition(
+        getTranslationDistanceMeter(), getRobotCentricRotationHeading().toWpilibRotation2d());
   }
 
   /************************************************************************************************
@@ -307,10 +294,6 @@ public class SwerveDriveModule extends BaseSubsystem {
    ************************************************************************************************/
   private double translationEncoderUnitsToMeters(double encoder_units) {
     return encoder_units / SwerveDriveModuleConfig.Translation.ENCODER_UNITS_PER_METER;
-  }
-
-  private double translationEncoderVelocityToMetersPerSecond(double encoder_units_per_100ms) {
-    return translationEncoderUnitsToMeters(encoder_units_per_100ms) * 10.0;
   }
 
   private int degreesToRotationEncoderUnits(double degrees) {

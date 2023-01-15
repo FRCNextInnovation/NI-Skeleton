@@ -23,7 +23,7 @@ import com.nextinnovation.team8214.devices.ahrs.BaseAhrs;
 import com.nextinnovation.team8214.managers.CancoderManager;
 import com.nextinnovation.team8214.managers.ControlSignalManager;
 import com.nextinnovation.team8214.managers.OdometerFusingManager;
-import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 
 import java.util.ArrayList;
@@ -231,7 +231,6 @@ public class Swerve extends BaseSubsystem {
 
     configSmartDashboard();
     configModules();
-    resetSensors();
     setState(SwerveState.DISABLE);
   }
 
@@ -284,7 +283,13 @@ public class Swerve extends BaseSubsystem {
   }
 
   public synchronized void setPose(Pose2d pose) {
-    odometerFusingManager.setPose(pose, getFieldCentricHeading());
+    odometerFusingManager.setPose(
+        pose,
+        getFieldCentricHeading(),
+        modules.get(0).getWpilibModuleDistance(),
+        modules.get(1).getWpilibModuleDistance(),
+        modules.get(2).getWpilibModuleDistance(),
+        modules.get(3).getWpilibModuleDistance());
   }
 
   public void setStartingPose(Pose2d pose) {
@@ -410,10 +415,10 @@ public class Swerve extends BaseSubsystem {
   public synchronized void updateOdometer() {
     odometerFusingManager.updateWO(
         getFieldCentricHeading(),
-        modules.get(0).getWpilibModuleState(),
-        modules.get(1).getWpilibModuleState(),
-        modules.get(2).getWpilibModuleState(),
-        modules.get(3).getWpilibModuleState());
+        modules.get(0).getWpilibModuleDistance(),
+        modules.get(1).getWpilibModuleDistance(),
+        modules.get(2).getWpilibModuleDistance(),
+        modules.get(3).getWpilibModuleDistance());
   }
 
   /**
@@ -452,11 +457,11 @@ public class Swerve extends BaseSubsystem {
   /************************************************************************************************
    * Log & self-test *
    ************************************************************************************************/
-  private NetworkTableEntry swerveStateEntry;
+  private GenericEntry swerveStateEntry;
 
-  private NetworkTableEntry isHeadingControllerEnabledEntry;
-  private NetworkTableEntry targetHeadingEntry;
-  private NetworkTableEntry isHeadingOnTargetEntry;
+  private GenericEntry isHeadingControllerEnabledEntry;
+  private GenericEntry targetHeadingEntry;
+  private GenericEntry isHeadingOnTargetEntry;
 
   public void configSmartDashboard() {
     var tab = Shuffleboard.getTab("Swerve");
@@ -471,7 +476,7 @@ public class Swerve extends BaseSubsystem {
     if (Config.ENABLE_DEBUG_OUTPUT) {
       swerveStateEntry.setString(swerveState.value);
       isHeadingControllerEnabledEntry.setBoolean(isHeadingControllerEnabled());
-      targetHeadingEntry.setNumber(getTargetHeading().getDegrees());
+      targetHeadingEntry.setDouble(getTargetHeading().getDegrees());
       isHeadingOnTargetEntry.setBoolean(isHeadingOnTarget());
 
       modules.forEach(SwerveDriveModule::logToSmartDashboard);

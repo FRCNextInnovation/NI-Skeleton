@@ -8,7 +8,7 @@ import com.nextinnovation.lib.loops.ILooper;
 import com.nextinnovation.lib.subsystems.BaseSubsystem;
 import com.nextinnovation.team8214.Config;
 import com.nextinnovation.team8214.Field;
-import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import org.photonvision.common.hardware.VisionLEDMode;
 
@@ -162,12 +162,13 @@ public class Vision extends BaseSubsystem {
   /************************************************************************************************
    * Log & self-test *
    ************************************************************************************************/
-  private NetworkTableEntry visionStateEntry;
-  private NetworkTableEntry hasVisionTargetEntry;
-  private NetworkTableEntry targetOrientationEntry;
-  private NetworkTableEntry targetElevationEntry;
-  private NetworkTableEntry fixedDistanceEntry;
-  private NetworkTableEntry cameraLatencyEntry;
+  private GenericEntry visionStateEntry;
+
+  private GenericEntry hasVisionTargetEntry;
+  private GenericEntry targetOrientationEntry;
+  private GenericEntry targetElevationEntry;
+  private GenericEntry fixedDistanceEntry;
+  private GenericEntry cameraLatencyEntry;
 
   public void configSmartDashboard() {
     var tab = Shuffleboard.getTab("Vision");
@@ -186,10 +187,10 @@ public class Vision extends BaseSubsystem {
       hasVisionTargetEntry.setBoolean(periodicInput.visionResult.hasTarget);
 
       if (periodicInput.visionResult.hasTarget) {
-        targetOrientationEntry.setNumber(getVisionResult().targetHeading.getDegrees());
-        targetElevationEntry.setNumber(getVisionResult().targetElevation.getDegrees());
-        fixedDistanceEntry.setNumber(getVisionResult().targetDistance);
-        cameraLatencyEntry.setNumber(getVisionResult().latency);
+        targetOrientationEntry.setDouble(getVisionResult().targetHeading.getDegrees());
+        targetElevationEntry.setDouble(getVisionResult().targetElevation.getDegrees());
+        fixedDistanceEntry.setDouble(getVisionResult().targetDistance);
+        cameraLatencyEntry.setDouble(getVisionResult().latency);
       }
     }
   }

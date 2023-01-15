@@ -24,7 +24,7 @@ public class PneumaticCompressor {
   }
 
   public boolean isEnabled() {
-    return compressor.enabled();
+    return compressor.isEnabled();
   }
 
   public boolean pressureOnTarget() {

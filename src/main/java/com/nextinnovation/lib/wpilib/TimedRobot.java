@@ -4,6 +4,7 @@
 
 package com.nextinnovation.lib.wpilib;
 
+import edu.wpi.first.hal.DriverStationJNI;
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
@@ -96,15 +97,13 @@ public class TimedRobot extends IterativeRobotBase {
   }
 
   @Override
-  @SuppressWarnings("NoFinalizer")
-  protected void finalize() {
+  public void close() {
     NotifierJNI.stopNotifier(m_notifier);
     NotifierJNI.cleanNotifier(m_notifier);
   }
 
   /** Provide an alternate "main loop" via startCompetition(). */
   @Override
-  @SuppressWarnings("UnsafeFinalization")
   public void startCompetition() {
     robotInit();
 
@@ -114,7 +113,7 @@ public class TimedRobot extends IterativeRobotBase {
 
     // Tell the DS that the robot is ready to be enabled
     System.out.println("********** Robot program startup complete **********");
-    HAL.observeUserProgramStarting();
+    DriverStationJNI.observeUserProgramStarting();
 
     // Loop forever, calling the appropriate mode-dependent function
     while (true) {
